@@ -26,5 +26,6 @@ export type History = {
   user_id: string; // Supabase Auth UID
   question_id: string; // 問題のUUID
   is_correct: boolean;
+  user_answer?: string | null;
   created_at: string;
 };

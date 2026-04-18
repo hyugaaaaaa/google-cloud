@@ -8,19 +8,33 @@ import { Header } from '@/components/common/Header';
 import type { Question } from '@/types/app.types';
 import { saveHistoryAction } from '@/app/(study)/actions';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Home, RotateCcw, LayoutDashboard, ArrowRight } from 'lucide-react';
+import { Trophy, Home, RotateCcw, LayoutDashboard, ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
-export function StudyClient({ questions }: { questions: Question[] }) {
+export function StudyClient({ questions, user }: { questions: Question[], user?: any }) {
+  const [isStarted, setIsStarted] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isFinished, setIsFinished] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [isPending, startTransition] = useTransition();
 
-  const currentQuestion = questions[currentIndex];
+  // --- クイズ開始処理 ---
+  const handleStart = (count: number) => {
+    // 問題をシャッフル
+    const shuffled = [...questions].sort(() => Math.random() - 0.5);
+    // 指定された数だけ抽出
+    const selected = count === -1 ? shuffled : shuffled.slice(0, count);
+    
+    setQuizQuestions(selected);
+    setIsStarted(true);
+  };
+
+  const currentQuestion = quizQuestions[currentIndex];
   const isAnswered = selectedOption !== null;
-  const isCorrect = isAnswered && selectedOption === currentQuestion.answer;
+  const isCorrect = isAnswered && selectedOption === currentQuestion?.answer;
 
   const handleSelectOption = (option: string) => {
     setSelectedOption(option);
@@ -30,13 +44,19 @@ export function StudyClient({ questions }: { questions: Question[] }) {
     if (correct) setCorrectCount(prev => prev + 1);
     
     // Save history in the background
-    startTransition(() => {
-      saveHistoryAction(currentQuestion.id, correct);
+    startTransition(async () => {
+      try {
+        await saveHistoryAction(currentQuestion.id, correct, option);
+        toast.success(correct ? "正解！履歴を保存しました" : "残念！履歴を保存しました");
+      } catch (error) {
+        console.error("Failed to save history:", error);
+        toast.error("保存に失敗しました");
+      }
     });
   };
 
   const handleNext = () => {
-    if (currentIndex < questions.length - 1) {
+    if (currentIndex < quizQuestions.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setSelectedOption(null);
     } else {
@@ -46,16 +66,18 @@ export function StudyClient({ questions }: { questions: Question[] }) {
 
   // --- 再挑戦 ---
   const handleReset = () => {
+    setIsStarted(false);
     setCurrentIndex(0);
     setSelectedOption(null);
     setIsFinished(false);
     setCorrectCount(0);
+    setQuizQuestions([]);
   };
 
   if (questions.length === 0) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header />
+        <Header user={user} />
         <div className="flex-1 flex items-center justify-center p-4 text-center">
           <div className="qz-card p-12 max-w-xl">
             <h1 className="text-2xl font-black text-qz-text dark:text-white mb-4 italic">No Questions Found</h1>
@@ -67,12 +89,74 @@ export function StudyClient({ questions }: { questions: Question[] }) {
     );
   }
 
-  // --- リザルト表示 ---
-  if (isFinished) {
-    const accuracy = Math.round((correctCount / questions.length) * 100);
+  // --- 開始前画面 ---
+  if (!isStarted) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header />
+        <Header user={user} />
+        <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-2xl w-full qz-card p-10 text-center"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-qz-blue/10 text-qz-blue text-xs font-black rounded-full mb-6 uppercase tracking-widest">
+              Study Mode
+            </div>
+            <h2 className="text-3xl font-black text-qz-text dark:text-white mb-4 leading-tight">
+              学習を始めましょう
+            </h2>
+            <p className="text-qz-text-light font-bold mb-10">
+              解きたい問題数を選択してください。問題はランダムに出題されます。
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 text-left">
+              {[
+                { count: 10, label: "クイック", desc: "隙間時間に最適", icon: <Zap className="w-5 h-5 text-qz-blue" /> },
+                { count: 20, label: "スタンダード", desc: "しっかり確認" },
+                { count: 40, label: "チャレンジ", desc: "全問マスター" },
+                { count: -1, label: "すべて", desc: "網羅的に学習", primary: true },
+              ].map((mode) => (
+                <button
+                  key={mode.count}
+                  onClick={() => handleStart(mode.count)}
+                  className={`p-6 rounded-2xl border-2 text-left transition-all duration-300 group ${
+                    mode.primary 
+                    ? "bg-qz-blue border-qz-blue text-white hover:scale-[1.02] shadow-xl shadow-qz-blue/20" 
+                    : "bg-white dark:bg-[#2E3856] border-qz-border dark:border-qz-border hover:border-qz-blue hover:scale-[1.02]"
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center gap-2">
+                      {mode.icon}
+                      <span className={`text-xl font-black ${mode.primary ? "text-white" : "text-qz-text dark:text-white"}`}>
+                        {mode.label}
+                      </span>
+                    </div>
+                    <ArrowRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${mode.primary ? "text-white" : "text-qz-blue"}`} />
+                  </div>
+                  <p className={`text-sm font-bold ${mode.primary ? "text-white/80" : "text-qz-text-light"}`}>
+                    {mode.count === -1 ? `全 ${questions.length} 問` : `${mode.count} 問`} • {mode.desc}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <Link href="/" className="text-qz-text-light font-bold hover:text-qz-blue transition-colors text-sm">
+              キャンセルしてホームに戻る
+            </Link>
+          </motion.div>
+        </main>
+      </div>
+    );
+  }
+
+  // --- リザルト表示 ---
+  if (isFinished) {
+    const accuracy = Math.round((correctCount / quizQuestions.length) * 100);
+    return (
+      <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
+        <Header user={user} />
         <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -87,13 +171,13 @@ export function StudyClient({ questions }: { questions: Question[] }) {
             
             <h2 className="text-4xl font-black text-qz-text dark:text-white mb-4 italic uppercase tracking-tighter">Excellent Work!</h2>
             <p className="text-qz-text-light font-bold mb-10">
-              学習セットのすべての問題を完了しました。
+              選択した {quizQuestions.length} 問の学習を完了しました。
             </p>
 
             <div className="grid grid-cols-2 gap-4 mb-10">
               <div className="bg-qz-bg dark:bg-[#2E3856] p-6 rounded-2xl border border-qz-border dark:border-[#2E3856]">
                 <span className="block text-[10px] font-black uppercase text-qz-text-light mb-1">正解数</span>
-                <span className="text-3xl font-black text-qz-success">{correctCount} <span className="text-sm font-bold text-qz-text-light">/ {questions.length}</span></span>
+                <span className="text-3xl font-black text-qz-success">{correctCount} <span className="text-sm font-bold text-qz-text-light">/ {quizQuestions.length}</span></span>
               </div>
               <div className="bg-qz-bg dark:bg-[#2E3856] p-6 rounded-2xl border border-qz-border dark:border-[#2E3856]">
                 <span className="block text-[10px] font-black uppercase text-qz-text-light mb-1">正答率</span>
@@ -119,8 +203,8 @@ export function StudyClient({ questions }: { questions: Question[] }) {
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col pt-[64px]">
-      <Header />
-      <ProgressBar currentIdx={currentIndex} total={questions.length} />
+      <Header user={user} />
+      <ProgressBar currentIdx={currentIndex} total={quizQuestions.length} />
       
       <main className="flex-1 flex flex-col items-center justify-start p-4 py-12 md:py-20 overflow-y-auto">
         <AnimatePresence mode="wait">
@@ -146,3 +230,4 @@ export function StudyClient({ questions }: { questions: Question[] }) {
     </div>
   );
 }
+

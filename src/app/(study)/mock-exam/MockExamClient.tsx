@@ -80,11 +80,12 @@ export function MockExamClient({ questions }: MockExamClientProps) {
     // DBに保存
     const records = finalAnswers.map(a => ({
       questionId: a.questionId,
-      isCorrect: a.isCorrect
+      isCorrect: a.isCorrect,
+      userAnswer: a.selectedOption
     }))
     
     // 非同期で保存（表示ブロックしないように裏で実行）
-    await saveBulkHistoryAction(records)
+    const { error } = await saveBulkHistoryAction(records, 'mock');
     setIsSaving(false)
   }
 

@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { StudyClient } from './StudyClient'
 import type { Question } from '@/types/app.types'
+import { decrypt } from '@/lib/crypto'
 
 export default async function CategoryStudyPage({
   params
@@ -9,9 +11,20 @@ export default async function CategoryStudyPage({
 }) {
   // In Next.js 15, params is treated as a Promise in Server Components. We resolve it here.
   const resolvedParams = await params
-  const { categoryId } = resolvedParams
+  const categoryId = decrypt(resolvedParams.categoryId)
+
+  if (!categoryId) {
+    // 復号に失敗した場合はホームへ戻す（セキュリティおよびURL期限切れ対策）
+    redirect('/')
+  }
 
   const supabase = await createClient()
+
+  // ユーザー情報を取得
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    redirect('/login')
+  }
 
   const { data: questions, error } = await supabase
     .from('questions')
@@ -37,5 +50,5 @@ export default async function CategoryStudyPage({
     created_at: q.created_at
   }))
 
-  return <StudyClient questions={processedQuestions} />
+  return <StudyClient questions={processedQuestions} user={user} />
 }

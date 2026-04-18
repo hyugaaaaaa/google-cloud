@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Quizlet Palette */
+  --qz-blue: #4255FF;
+  --qz-blue-hover: #3b4ae5;
+  --qz-yellow: #FFCD1F;
+  --qz-bg: #F6F7FB;
+  --qz-white: #FFFFFF;
+  --qz-text: #1A1D23;
+  --qz-text-light: #646F82;
+  --qz-border: #E8EBF2;
+  --qz-success: #23B26D;
+  --qz-error: #FF725E;
+  
+  --background: var(--qz-bg);
+  --foreground: var(--qz-text);
+}
+
+/* Ensure dark mode class on html correctly overrides variables */
+html.dark {
+  --qz-bg: #0A092D;
+  --qz-white: #1A1D23;
+  --qz-text: #FFFFFF;
+  --qz-text-light: #A8B1C1;
+  --qz-border: #2E3856;
+  
+  --background: var(--qz-bg);
+  --foreground: var(--qz-text);
+}
+
+@theme inline {
+  --color-qz-blue: var(--qz-blue);
+  --color-qz-blue-hover: var(--qz-blue-hover);
+  --color-qz-yellow: var(--qz-yellow);
+  --color-qz-bg: var(--qz-bg);
+  --color-qz-text: var(--qz-text);
+  --color-qz-text-light: var(--qz-text-light);
+  --color-qz-border: var(--qz-border);
+  --color-qz-success: var(--qz-success);
+  --color-qz-error: var(--qz-error);
+  
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--qz-bg);
+  color: var(--qz-text);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base card style */
+.qz-card {
+  @apply bg-white dark:bg-[#1A1D23] rounded-[20px] shadow-[0_4px_16px_rgba(0,0,0,0.05)] border border-[var(--qz-border)] transition-all;
+}
+
+.qz-card-hover {
+  @apply hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] hover:-translate-y-1 cursor-pointer;
+}
+
+/* Primary Button */
+.qz-btn-primary {
+  @apply bg-[var(--qz-blue)] hover:bg-[var(--qz-blue-hover)] text-white font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed;
+}

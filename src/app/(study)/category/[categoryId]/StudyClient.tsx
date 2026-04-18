@@ -1,0 +1,148 @@
+"use client";
+
+import React, { useState, useTransition } from 'react';
+import { QuestionCard } from '@/components/study/QuestionCard';
+import { ExplanationArea } from '@/components/study/ExplanationArea';
+import { ProgressBar } from '@/components/study/ProgressBar';
+import { Header } from '@/components/common/Header';
+import type { Question } from '@/types/app.types';
+import { saveHistoryAction } from '@/app/(study)/actions';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, Home, RotateCcw, LayoutDashboard, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+
+export function StudyClient({ questions }: { questions: Question[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [isFinished, setIsFinished] = useState(false);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [isPending, startTransition] = useTransition();
+
+  const currentQuestion = questions[currentIndex];
+  const isAnswered = selectedOption !== null;
+  const isCorrect = isAnswered && selectedOption === currentQuestion.answer;
+
+  const handleSelectOption = (option: string) => {
+    setSelectedOption(option);
+    
+    // Check correct
+    const correct = option === currentQuestion.answer;
+    if (correct) setCorrectCount(prev => prev + 1);
+    
+    // Save history in the background
+    startTransition(() => {
+      saveHistoryAction(currentQuestion.id, correct);
+    });
+  };
+
+  const handleNext = () => {
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+      setSelectedOption(null);
+    } else {
+      setIsFinished(true);
+    }
+  };
+
+  // --- 再挑戦 ---
+  const handleReset = () => {
+    setCurrentIndex(0);
+    setSelectedOption(null);
+    setIsFinished(false);
+    setCorrectCount(0);
+  };
+
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center p-4 text-center">
+          <div className="qz-card p-12 max-w-xl">
+            <h1 className="text-2xl font-black text-qz-text dark:text-white mb-4 italic">No Questions Found</h1>
+            <p className="text-qz-text-light dark:text-qz-text-light font-bold">このカテゴリにはまだ問題がありません。データが追加されるのをお待ちください。</p>
+            <Link href="/" className="qz-btn-primary mt-8 inline-block">ホームに戻る</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- リザルト表示 ---
+  if (isFinished) {
+    const accuracy = Math.round((correctCount / questions.length) * 100);
+    return (
+      <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-xl w-full qz-card p-10 text-center relative overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 w-full h-2 bg-qz-yellow"></div>
+            
+            <div className="w-24 h-24 bg-qz-yellow/20 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_20px_rgba(255,205,31,0.3)]">
+              <Trophy className="w-12 h-12 text-qz-yellow" />
+            </div>
+            
+            <h2 className="text-4xl font-black text-qz-text dark:text-white mb-4 italic uppercase tracking-tighter">Excellent Work!</h2>
+            <p className="text-qz-text-light font-bold mb-10">
+              学習セットのすべての問題を完了しました。
+            </p>
+
+            <div className="grid grid-cols-2 gap-4 mb-10">
+              <div className="bg-qz-bg dark:bg-[#2E3856] p-6 rounded-2xl border border-qz-border dark:border-[#2E3856]">
+                <span className="block text-[10px] font-black uppercase text-qz-text-light mb-1">正解数</span>
+                <span className="text-3xl font-black text-qz-success">{correctCount} <span className="text-sm font-bold text-qz-text-light">/ {questions.length}</span></span>
+              </div>
+              <div className="bg-qz-bg dark:bg-[#2E3856] p-6 rounded-2xl border border-qz-border dark:border-[#2E3856]">
+                <span className="block text-[10px] font-black uppercase text-qz-text-light mb-1">正答率</span>
+                <span className="text-3xl font-black text-qz-blue">{accuracy}%</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button onClick={handleReset} className="flex-1 px-6 py-4 border-2 border-qz-border dark:border-[#2E3856] rounded-xl font-black text-qz-text dark:text-white hover:bg-qz-bg dark:hover:bg-[#2E3856] transition-all flex items-center justify-center gap-2">
+                <RotateCcw className="w-5 h-5" /> もう一度学習
+              </button>
+              <Link href="/dashboard" className="flex-1 qz-btn-primary flex items-center justify-center gap-2 shadow-lg shadow-qz-blue/20">
+                成績を見る <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
+          </motion.div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!currentQuestion) return null;
+
+  return (
+    <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col pt-[64px]">
+      <Header />
+      <ProgressBar currentIdx={currentIndex} total={questions.length} />
+      
+      <main className="flex-1 flex flex-col items-center justify-start p-4 py-12 md:py-20 overflow-y-auto">
+        <AnimatePresence mode="wait">
+          <QuestionCard 
+            key={currentQuestion.id}
+            question={currentQuestion}
+            selectedOption={selectedOption}
+            onSelectOption={handleSelectOption}
+            isAnswered={isAnswered}
+          />
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isAnswered && (
+            <ExplanationArea 
+              isCorrect={isCorrect}
+              explanation={currentQuestion.explanation}
+              onNext={handleNext}
+            />
+          )}
+        </AnimatePresence>
+      </main>
+    </div>
+  );
+}

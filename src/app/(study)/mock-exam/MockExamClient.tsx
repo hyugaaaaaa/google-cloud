@@ -1,20 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import type { Question } from '@/types/app.types'
-import { saveBulkHistoryAction } from '@/app/(study)/actions'
+import { saveBulkHistoryAction, toggleBookmarkAction } from '@/app/(study)/actions'
 import Link from 'next/link'
 import { Header } from '@/components/common/Header'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Timer, Trophy, ArrowRight, RotateCcw, LayoutDashboard, CheckCircle2, XCircle, AlertCircle, ShieldQuestion } from 'lucide-react'
+import { Timer, Trophy, ArrowRight, RotateCcw, LayoutDashboard, CheckCircle2, XCircle, AlertCircle, ShieldQuestion, Star } from 'lucide-react'
+import { toast } from 'sonner'
 
 type MockExamClientProps = {
-  questions: (Question & { categoryName: string })[]
+  questions: (Question & { categoryName: string })[],
+  userEmail?: string,
+  streak?: number,
+  initialBookmarkedIds?: string[]
 }
 
 const EXAM_TIME_LIMIT_SEC = 15 * 60 // 15分
 
-export function MockExamClient({ questions }: MockExamClientProps) {
+export function MockExamClient({ questions, userEmail, streak, initialBookmarkedIds = [] }: MockExamClientProps) {
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(initialBookmarkedIds));
+  const [isBookmarkPending, startBookmarkTransition] = useTransition();
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   
@@ -46,7 +52,40 @@ export function MockExamClient({ questions }: MockExamClientProps) {
 
   const currentQuestion = questions[currentIndex]
 
-  // フォーマット用
+  const handleToggleBookmark = (questionId: string) => {
+    const isCurrentlyBookmarked = bookmarkedIds.has(questionId);
+
+    // Optimistic update
+    setBookmarkedIds(prev => {
+      const next = new Set(prev);
+      if (isCurrentlyBookmarked) {
+        next.delete(questionId);
+      } else {
+        next.add(questionId);
+      }
+      return next;
+    });
+
+    startBookmarkTransition(async () => {
+      const result = await toggleBookmarkAction(questionId);
+      if (result.error) {
+        toast.error("ブックマークの更新に失敗しました");
+        // Rollback
+        setBookmarkedIds(prev => {
+          const next = new Set(prev);
+          if (isCurrentlyBookmarked) {
+            next.add(questionId);
+          } else {
+            next.delete(questionId);
+          }
+          return next;
+        });
+      } else {
+        toast.success(result.bookmarked ? "ブックマークに追加しました" : "ブックマークを解除しました");
+      }
+    });
+  };
+
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60)
     const s = sec % 60
@@ -97,7 +136,7 @@ export function MockExamClient({ questions }: MockExamClientProps) {
 
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header />
+        <Header userEmail={userEmail} streak={streak} />
         <main className="container mx-auto px-4 py-12 max-w-4xl">
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
@@ -149,20 +188,32 @@ export function MockExamClient({ questions }: MockExamClientProps) {
               {questions.map((q, idx) => {
                 const answerRecord = answers.find(a => a.questionId === q.id)
                 const isCorrect = answerRecord?.isCorrect || false
+                const isBookmarked = bookmarkedIds.has(q.id)
                 
                 return (
-                  <div key={q.id} className="qz-card group overflow-hidden">
+                  <div key={q.id} className="qz-card group overflow-hidden relative">
+                    <button
+                      onClick={() => handleToggleBookmark(q.id)}
+                      className={`absolute top-12 right-6 p-2 rounded-full transition-all duration-300 z-10 ${
+                        isBookmarked 
+                          ? 'bg-qz-yellow text-white shadow-lg' 
+                          : 'bg-qz-bg dark:bg-[#2E3856] text-qz-text-light hover:text-qz-yellow hover:bg-qz-yellow/10'
+                      }`}
+                    >
+                      <Star size={20} className={isBookmarked ? 'fill-white' : ''} />
+                    </button>
+
                     <div className={`px-6 py-3 font-black text-xs uppercase tracking-widest flex justify-between items-center ${
                       isCorrect ? 'bg-qz-success/10 text-qz-success' : 'bg-qz-error/10 text-qz-error'
                     }`}>
                       <span>Question {idx + 1} • {q.categoryName}</span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mr-10">
                         {isCorrect ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
                         {isCorrect ? 'Correct' : 'Incorrect'}
                       </div>
                     </div>
                     <div className="p-8">
-                      <p className="text-xl font-bold text-qz-text dark:text-white mb-8 leading-relaxed">
+                      <p className="text-xl font-bold text-qz-text dark:text-white mb-8 leading-relaxed max-w-[90%]">
                         {q.content}
                       </p>
                       
@@ -222,7 +273,7 @@ export function MockExamClient({ questions }: MockExamClientProps) {
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-      <Header />
+      <Header userEmail={userEmail} streak={streak} />
       
       {/* Sleek Progress Bar for Exam */}
       <div className="fixed top-[64px] left-0 w-full h-1 bg-qz-border dark:bg-[#2E3856] z-[60]">
@@ -265,13 +316,24 @@ export function MockExamClient({ questions }: MockExamClientProps) {
             >
               <div className="absolute top-0 left-0 w-1.5 h-full bg-qz-yellow"></div>
               
+              <button
+                onClick={() => handleToggleBookmark(currentQuestion.id)}
+                className={`absolute top-8 right-8 p-3 rounded-full transition-all duration-300 z-10 ${
+                  bookmarkedIds.has(currentQuestion.id)
+                    ? 'bg-qz-yellow text-white shadow-lg' 
+                    : 'bg-qz-bg dark:bg-[#2E3856] text-qz-text-light hover:text-qz-yellow hover:bg-qz-yellow/10'
+                }`}
+              >
+                <Star size={20} className={bookmarkedIds.has(currentQuestion.id) ? 'fill-white' : ''} />
+              </button>
+
               <div className="mb-6">
                 <span className="text-xs font-black uppercase tracking-[0.2em] text-qz-text-light">
                   Category: {currentQuestion.categoryName}
                 </span>
               </div>
               
-              <h2 className="text-2xl md:text-3xl font-black text-qz-text dark:text-white mb-12 leading-tight">
+              <h2 className="text-2xl md:text-3xl font-black text-qz-text dark:text-white mb-12 leading-tight max-w-[90%]">
                 {currentQuestion.content}
               </h2>
 

@@ -1,104 +1,40 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+'use client'
+
+import React, { useMemo } from 'react'
 import { Header } from '@/components/common/Header'
 import { Achievements } from '@/components/dashboard/Achievements'
 import { CategoryList } from '@/components/dashboard/CategoryList'
-import { Star, BarChart3 } from 'lucide-react'
+import { Zap, ChevronRight, Star, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function DashboardPage() {
-  const supabase = await createClient()
+type DashboardData = {
+  userEmail: string
+  streak: number
+  totalAnswers: number
+  totalCorrect: number
+  overallAccuracy: number
+  uniqueIncorrectCount: number
+  categoryResults: any[]
+  hasCompletedMock: boolean
+}
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  // 1. プロフィール取得（streak用）
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('streak_count, nickname')
-    .eq('id', user.id)
-    .single()
-
-  // 2. 履歴取得
-  const { data: histories, error } = await supabase
-    .from('histories')
-    .select(`
-      is_correct,
-      question_id,
-      created_at,
-      study_mode,
-      questions (
-        category_id,
-        categories (
-          name
-        )
-      )
-    `)
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: true })
-
-  if (error) console.error('Error fetching histories:', error)
-
-  // 3. データ加工（シリアライズセーフな形式）
-  const typedHistories = (histories || []).map((h: any) => ({
-    is_correct: !!h.is_correct,
-    study_mode: String(h.study_mode || ''),
-    question_id: String(h.question_id || ''),
-    created_at: String(h.created_at || ''),
-    catId: String(h.questions?.category_id || ''),
-    catName: String(h.questions?.categories?.name || '不明')
-  }))
-
-  const totalAnswers = typedHistories.length
-  const totalCorrect = typedHistories.filter(h => h.is_correct).length
-  const overallAccuracy = totalAnswers > 0 ? Math.round((totalCorrect / totalAnswers) * 100) : 0
-  
-  const latestResults = new Map<string, boolean>()
-  typedHistories.forEach(h => {
-    latestResults.set(h.question_id, h.is_correct)
-  })
-  const uniqueIncorrectCount = Array.from(latestResults.values()).filter(isCorrect => !isCorrect).length
-
-  // カテゴリ別集計
-  const categoryStats: Record<string, any> = {}
-  typedHistories.forEach(h => {
-    const catId = h.catId
-    if (!categoryStats[catId]) {
-      categoryStats[catId] = { 
-        id: catId,
-        name: h.catName,
-        total: 0,
-        correct: 0,
-        lastActivity: h.created_at,
-        latestResults: new Map<string, boolean>()
-      }
-    }
-    const stat = categoryStats[catId]
-    stat.total++
-    if (h.is_correct) stat.correct++
-    if (new Date(h.created_at) > new Date(stat.lastActivity)) {
-      stat.lastActivity = h.created_at
-    }
-    stat.latestResults.set(h.question_id, h.is_correct)
-  })
-
-  const categoryResults = Object.values(categoryStats).map(stat => ({
-    id: stat.id,
-    name: stat.name,
-    total: stat.total,
-    correct: stat.correct,
-    accuracy: Math.round((stat.correct / stat.total) * 100),
-    lastActivity: stat.lastActivity,
-    uniqueWrongCount: Array.from(stat.latestResults.values()).filter((v: any) => !v).length
-  })).sort((a, b) => b.total - a.total)
-
-  const streak = profile?.streak_count || 0
-  const hasCompletedMock = typedHistories.some(h => h.study_mode === 'mock')
+export function DashboardWrapper({ dataJSON }: { dataJSON: string }) {
+  const data = useMemo<DashboardData>(() => JSON.parse(dataJSON), [dataJSON])
+  const { 
+    userEmail, 
+    streak, 
+    totalAnswers, 
+    totalCorrect, 
+    overallAccuracy, 
+    uniqueIncorrectCount, 
+    categoryResults,
+    hasCompletedMock
+  } = data
 
   if (totalAnswers === 0) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg">
-        <Header userEmail={user.email || ''} streak={streak} />
+        <Header userEmail={userEmail} streak={streak} />
         <main className="container mx-auto px-4 py-12 max-w-4xl">
           <div className="qz-card p-16 text-center">
             <div className="w-20 h-20 bg-qz-blue/10 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -119,7 +55,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg">
-      <Header userEmail={user.email || ''} streak={streak} />
+      <Header userEmail={userEmail} streak={streak} />
       
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-5xl">
         <div className="space-y-8">

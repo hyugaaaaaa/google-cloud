@@ -6,11 +6,11 @@ import { User, LogOut, LayoutDashboard, Home, BookOpen, Flame } from 'lucide-rea
 import { ThemeToggle } from './ThemeToggle'
 
 type HeaderProps = {
-  user?: any
+  userEmail?: string
   streak?: number
 }
 
-export function Header({ user, streak }: HeaderProps) {
+export function Header({ userEmail, streak }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full bg-white dark:bg-[#1A1D23] border-b border-qz-border dark:border-[#2E3856] h-[64px] flex items-center shadow-sm">
       <div className="container mx-auto px-4 flex justify-between items-center max-w-7xl">
@@ -27,7 +27,7 @@ export function Header({ user, streak }: HeaderProps) {
           <Link href="/" className="text-[15px] font-bold text-qz-text dark:text-white hover:text-qz-blue transition-colors flex items-center gap-2">
             <Home className="w-4 h-4" /> ホーム
           </Link>
-          {user && (
+          {userEmail && (
             <Link href="/dashboard" className="text-[15px] font-bold text-qz-text dark:text-white hover:text-qz-blue transition-colors flex items-center gap-2">
               <LayoutDashboard className="w-4 h-4" /> ダッシュボード
             </Link>
@@ -40,7 +40,7 @@ export function Header({ user, streak }: HeaderProps) {
           
           <div className="h-6 w-px bg-qz-border dark:bg-[#3B4664] mx-0.5 md:mx-1"></div>
 
-          {user ? (
+          {userEmail ? (
             <div className="flex items-center gap-2 md:gap-4">
               <div className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 bg-orange-500/10 text-orange-500 rounded-full border border-orange-500/20 animate-in fade-in duration-500">
                 <Flame className="w-3.5 h-3.5 md:w-4 md:h-4 fill-orange-500" />
@@ -48,7 +48,7 @@ export function Header({ user, streak }: HeaderProps) {
               </div>
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-qz-bg dark:bg-[#2E3856] rounded-full border border-qz-border dark:border-[#2E3856]">
                 <User className="w-4 h-4 text-qz-blue" />
-                <span className="text-xs font-bold truncate max-w-[100px]">{user.email?.split('@')[0]}</span>
+                <span className="text-xs font-bold truncate max-w-[100px]">{userEmail.split('@')[0]}</span>
               </div>
               <form action={logoutAction}>
                 <button type="submit" className="p-2 text-qz-text-light hover:text-qz-error hover:bg-qz-error/10 rounded-full transition-all" title="ログアウト">

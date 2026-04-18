@@ -6,20 +6,32 @@ import { ExplanationArea } from '@/components/study/ExplanationArea';
 import { ProgressBar } from '@/components/study/ProgressBar';
 import { Header } from '@/components/common/Header';
 import type { Question } from '@/types/app.types';
-import { saveHistoryAction } from '@/app/(study)/actions';
+import { saveHistoryAction, toggleBookmarkAction } from '@/app/(study)/actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Home, RotateCcw, LayoutDashboard, ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
-export function StudyClient({ questions, user }: { questions: Question[], user?: any }) {
+export function StudyClient({ 
+  questions, 
+  userEmail, 
+  streak,
+  initialBookmarkedIds = [] 
+}: { 
+  questions: Question[], 
+  userEmail?: string,
+  streak?: number,
+  initialBookmarkedIds?: string[]
+}) {
   const [isStarted, setIsStarted] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isFinished, setIsFinished] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(initialBookmarkedIds));
   const [isPending, startTransition] = useTransition();
+  const [isBookmarkPending, startBookmarkTransition] = useTransition();
 
   // --- クイズ開始処理 ---
   const handleStart = (count: number) => {
@@ -77,7 +89,7 @@ export function StudyClient({ questions, user }: { questions: Question[], user?:
   if (questions.length === 0) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header user={user} />
+        <Header userEmail={userEmail} streak={streak} />
         <div className="flex-1 flex items-center justify-center p-4 text-center">
           <div className="qz-card p-12 max-w-xl">
             <h1 className="text-2xl font-black text-qz-text dark:text-white mb-4 italic">No Questions Found</h1>
@@ -93,7 +105,7 @@ export function StudyClient({ questions, user }: { questions: Question[], user?:
   if (!isStarted) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header user={user} />
+        <Header userEmail={userEmail} streak={streak} />
         <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -156,7 +168,7 @@ export function StudyClient({ questions, user }: { questions: Question[], user?:
     const accuracy = Math.round((correctCount / quizQuestions.length) * 100);
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header user={user} />
+        <Header userEmail={userEmail} streak={streak} />
         <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -201,9 +213,46 @@ export function StudyClient({ questions, user }: { questions: Question[], user?:
 
   if (!currentQuestion) return null;
 
+  const handleToggleBookmark = () => {
+    if (!currentQuestion) return;
+    
+    const questionId = currentQuestion.id;
+    const isCurrentlyBookmarked = bookmarkedIds.has(questionId);
+
+    // Optimistic update
+    setBookmarkedIds(prev => {
+      const next = new Set(prev);
+      if (isCurrentlyBookmarked) {
+        next.delete(questionId);
+      } else {
+        next.add(questionId);
+      }
+      return next;
+    });
+
+    startBookmarkTransition(async () => {
+      const result = await toggleBookmarkAction(questionId);
+      if (result.error) {
+        toast.error("ブックマークの更新に失敗しました");
+        // Rollback
+        setBookmarkedIds(prev => {
+          const next = new Set(prev);
+          if (isCurrentlyBookmarked) {
+            next.add(questionId);
+          } else {
+            next.delete(questionId);
+          }
+          return next;
+        });
+      } else {
+        toast.success(result.bookmarked ? "ブックマークに追加しました" : "ブックマークを解除しました");
+      }
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col pt-[64px]">
-      <Header user={user} />
+    <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
+      <Header userEmail={userEmail} streak={streak} />
       <ProgressBar currentIdx={currentIndex} total={quizQuestions.length} />
       
       <main className="flex-1 flex flex-col items-center justify-start p-4 py-12 md:py-20 overflow-y-auto">
@@ -214,6 +263,8 @@ export function StudyClient({ questions, user }: { questions: Question[], user?:
             selectedOption={selectedOption}
             onSelectOption={handleSelectOption}
             isAnswered={isAnswered}
+            isBookmarked={bookmarkedIds.has(currentQuestion.id)}
+            onToggleBookmark={handleToggleBookmark}
           />
         </AnimatePresence>
 

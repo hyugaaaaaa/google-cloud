@@ -35,10 +35,15 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  const isPublicFile = request.nextUrl.pathname.startsWith('/manifest.json') || 
+                       request.nextUrl.pathname.startsWith('/sw.js') || 
+                       request.nextUrl.pathname.startsWith('/icon-') ||
+                       request.nextUrl.pathname.startsWith('/favicon.ico')
+
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')
-  
-  // If user is not logged in and not on auth pages or home, redirect to login
-  if (!user && !isAuthPage && request.nextUrl.pathname !== '/') {
+
+  // If user is not logged in and not on auth pages or home/public files, redirect to login
+  if (!user && !isAuthPage && !isPublicFile && request.nextUrl.pathname !== '/') {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'

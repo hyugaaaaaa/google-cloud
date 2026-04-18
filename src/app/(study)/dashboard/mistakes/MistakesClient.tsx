@@ -1,8 +1,12 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { Calendar, ChevronLeft, BookOpen, CheckCircle2, XCircle, AlertCircle, LayoutGrid, List } from 'lucide-react'
+import { Calendar, ChevronLeft, BookOpen, CheckCircle2, XCircle, AlertCircle, LayoutGrid, List, Star } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toggleBookmarkAction } from '@/app/(study)/actions'
+import { toast } from 'sonner'
+import { useTransition } from 'react'
+import { SafeDate } from '@/components/common/SafeDate'
 
 type MistakeHistoryItem = {
   id: string
@@ -22,10 +26,13 @@ type MistakeHistoryItem = {
 }
 
 interface MistakesClientProps {
-  mistakes: MistakeHistoryItem[]
+  mistakes: MistakeHistoryItem[],
+  initialBookmarkedIds?: string[]
 }
 
-export function MistakesClient({ mistakes }: MistakesClientProps) {
+export function MistakesClient({ mistakes, initialBookmarkedIds = [] }: MistakesClientProps) {
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(initialBookmarkedIds));
+  const [isPending, startTransition] = useTransition();
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   // カテゴリ一覧と件数を集計
@@ -43,6 +50,43 @@ export function MistakesClient({ mistakes }: MistakesClientProps) {
     if (selectedCategory === 'all') return mistakes
     return mistakes.filter(m => m.questions.categories.name === selectedCategory)
   }, [selectedCategory, mistakes])
+
+  const handleToggleBookmark = (e: React.MouseEvent, questionId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const isCurrentlyBookmarked = bookmarkedIds.has(questionId);
+
+    // Optimistic update
+    setBookmarkedIds(prev => {
+      const next = new Set(prev);
+      if (isCurrentlyBookmarked) {
+        next.delete(questionId);
+      } else {
+        next.add(questionId);
+      }
+      return next;
+    });
+
+    startTransition(async () => {
+      const result = await toggleBookmarkAction(questionId);
+      if (result.error) {
+        toast.error("ブックマークの更新に失敗しました");
+        // Rollback
+        setBookmarkedIds(prev => {
+          const next = new Set(prev);
+          if (isCurrentlyBookmarked) {
+            next.add(questionId);
+          } else {
+            next.delete(questionId);
+          }
+          return next;
+        });
+      } else {
+        toast.success(result.bookmarked ? "ブックマークに追加しました" : "ブックマークを解除しました");
+      }
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -104,35 +148,49 @@ export function MistakesClient({ mistakes }: MistakesClientProps) {
       {/* Mistakes List */}
       <div className="space-y-4 relative min-h-[400px]">
         <AnimatePresence mode="popLayout">
-          {filteredMistakes.map((mistake) => (
-            <motion.div
-              key={mistake.id}
-              layout
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-            >
-              <details className="qz-card group overflow-hidden transition-all duration-300 open:ring-2 open:ring-qz-blue/20">
-                <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
-                  <div className="flex-grow pr-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="px-2 py-0.5 bg-qz-blue/10 text-qz-blue text-[9px] font-black rounded uppercase tracking-wider">
-                        {mistake.questions.categories.name}
-                      </span>
-                      <span className="flex items-center gap-1 text-qz-text-light text-[9px] font-bold">
-                        <Calendar size={10} />
-                        {new Date(mistake.created_at).toLocaleDateString('ja-JP')}
-                      </span>
+          {filteredMistakes.map((mistake) => {
+            const isBookmarked = bookmarkedIds.has(mistake.question_id);
+            return (
+              <motion.div
+                key={mistake.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
+                <details className="qz-card group overflow-hidden transition-all duration-300 open:ring-2 open:ring-qz-blue/20">
+                  <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <div className="flex-grow pr-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="px-2 py-0.5 bg-qz-blue/10 text-qz-blue text-[9px] font-black rounded uppercase tracking-wider">
+                          {mistake.questions.categories.name}
+                        </span>
+                        <span className="flex items-center gap-1 text-qz-text-light text-[9px] font-bold">
+                          <Calendar size={10} />
+                          <SafeDate date={mistake.created_at} />
+                        </span>
+                      </div>
+                      <h3 className="text-base md:text-lg font-bold text-qz-text dark:text-white line-clamp-2 leading-snug group-hover:text-qz-blue transition-colors max-w-[90%]">
+                        {mistake.questions.content}
+                      </h3>
                     </div>
-                    <h3 className="text-base md:text-lg font-bold text-qz-text dark:text-white line-clamp-2 leading-snug group-hover:text-qz-blue transition-colors">
-                      {mistake.questions.content}
-                    </h3>
-                  </div>
-                  <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-xl bg-qz-bg dark:bg-[#2E3856] flex items-center justify-center group-open:rotate-180 transition-transform">
-                    <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 -rotate-90" />
-                  </div>
-                </summary>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => handleToggleBookmark(e, mistake.question_id)}
+                        className={`p-2.5 rounded-xl transition-all duration-300 ${
+                          isBookmarked 
+                            ? 'bg-qz-yellow text-white shadow-lg' 
+                            : 'bg-qz-bg dark:bg-[#2E3856] text-qz-text-light hover:text-qz-yellow hover:bg-qz-yellow/10'
+                        }`}
+                      >
+                        <Star size={18} className={isBookmarked ? 'fill-white' : ''} />
+                      </button>
+                      <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-xl bg-qz-bg dark:bg-[#2E3856] flex items-center justify-center group-open:rotate-180 transition-transform">
+                        <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 -rotate-90" />
+                      </div>
+                    </div>
+                  </summary>
                 
                 <div className="px-6 md:px-8 pb-8 pt-2 border-t border-qz-border dark:border-[#2E3856] animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="space-y-6">
@@ -179,8 +237,9 @@ export function MistakesClient({ mistakes }: MistakesClientProps) {
                   </div>
                 </div>
               </details>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
     </div>

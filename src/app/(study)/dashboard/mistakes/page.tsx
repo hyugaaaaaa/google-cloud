@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Header } from '@/components/common/Header'
 import { AlertCircle, ChevronLeft, Calendar, BookOpen, CheckCircle2, XCircle } from 'lucide-react'
+import { MistakesClient } from './MistakesClient'
 
 type MistakeHistoryItem = {
   id: string
@@ -21,15 +22,12 @@ type MistakeHistoryItem = {
   }
 }
 
-import { MistakesClient } from './MistakesClient'
-
 export default async function MistakesPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // 全履歴を取得（最新順）
   const { data: histories, error } = await supabase
     .from('histories')
     .select(`
@@ -57,7 +55,6 @@ export default async function MistakesPage() {
 
   const typedHistories = (histories as unknown as MistakeHistoryItem[]) || []
 
-  // 各問題の「最新の状態」を特定し、かつ「現在不正解」のものに絞り込む
   const latestStatusMap = new Map<string, MistakeHistoryItem>()
   typedHistories.forEach(h => {
     if (!latestStatusMap.has(h.question_id)) {
@@ -69,9 +66,24 @@ export default async function MistakesPage() {
     .filter(h => !h.is_correct)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
+  const { data: bookmarkData } = await supabase
+    .from('bookmarks')
+    .select('question_id')
+    .eq('user_id', user.id)
+  
+  const initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('streak_count')
+    .eq('id', user.id)
+    .single()
+
+  const streak = profile?.streak_count || 0
+
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg text-qz-text dark:text-qz-text flex flex-col">
-      <Header user={user} />
+      <Header userEmail={user.email || ''} streak={streak} />
       
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="mb-4">
@@ -100,7 +112,10 @@ export default async function MistakesPage() {
             </Link>
           </div>
         ) : (
-          <MistakesClient mistakes={currentMistakes} />
+          <MistakesClient 
+            mistakes={currentMistakes} 
+            initialBookmarkedIds={initialBookmarkedIds} 
+          />
         )}
       </main>
     </div>

@@ -49,15 +49,20 @@ export async function signupAction(prevState: any, formData: FormData) {
 
   const user = authData.user
   if (user) {
-    // Insert into profiles table
-    const { error: profileError } = await supabase.from('profiles').insert({
-      user_id: user.id,
-      nickname: nickname,
-    })
+    // プロフィールはデータベース側のトリガー(handle_new_user)で自動作成されるため、
+    // ここでは提供されたニックネームで更新を行う
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        nickname: nickname,
+      })
+      .eq('id', user.id)
 
     if (profileError) {
-      console.error('Profile creation failed:', profileError)
-      return { error: 'ユーザープロフィールの作成に失敗しました' }
+      console.error('Profile update failed:', profileError)
+      // 登録自体は成功しているので、ここでのエラーは致命的ではないが、
+      // ユーザーに状況を伝えるためにエラーを返す
+      return { error: 'プロフィールの更新に失敗しました。ログイン後に再度お試しください。' }
     }
   }
 

@@ -1,17 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trophy, Home, RotateCcw, LayoutDashboard, ArrowRight, Zap, CheckCircle2, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
-import { saveBulkHistoryAction } from '@/app/(study)/actions'
+import { saveBulkHistoryAction, toggleBookmarkAction } from '@/app/(study)/actions'
 import { Header } from '@/components/common/Header'
+import { QuestionCard } from '@/components/study/QuestionCard'
+import { ExplanationArea } from '@/components/study/ExplanationArea'
+import { toast } from 'sonner'
 
-export function DailyChallengeClient({ questions, user, isCompleted: initialCompleted, dateString }: { 
+export function DailyChallengeClient({ 
+  questions, 
+  userEmail, 
+  streak,
+  isCompleted: initialCompleted, 
+  dateString,
+  initialBookmarkedIds = []
+}: { 
   questions: any[], 
-  user: any, 
+  userEmail: string, 
+  streak?: number,
   isCompleted: boolean,
-  dateString: string
+  dateString: string,
+  initialBookmarkedIds?: string[]
 }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<any[]>([])
@@ -19,18 +31,21 @@ export function DailyChallengeClient({ questions, user, isCompleted: initialComp
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [showExplanation, setShowExplanation] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(initialBookmarkedIds));
+  const [isBookmarkPending, startBookmarkTransition] = useTransition();
 
   const currentQuestion = questions[currentIndex]
+  const isCorrect = selectedOption === currentQuestion?.answer
 
   const handleSelectOption = (option: string) => {
     if (showExplanation) return
     setSelectedOption(option)
     setShowExplanation(true)
     
-    const isCorrect = option === currentQuestion.answer
+    const correct = option === currentQuestion.answer
     setAnswers([...answers, {
       questionId: currentQuestion.id,
-      isCorrect,
+      isCorrect: correct,
       userAnswer: option
     }])
   }
@@ -50,14 +65,51 @@ export function DailyChallengeClient({ questions, user, isCompleted: initialComp
     }
   }
 
+  const handleToggleBookmark = () => {
+    if (!currentQuestion) return;
+    
+    const questionId = currentQuestion.id;
+    const isCurrentlyBookmarked = bookmarkedIds.has(questionId);
+
+    // Optimistic update
+    setBookmarkedIds(prev => {
+      const next = new Set(prev);
+      if (isCurrentlyBookmarked) {
+        next.delete(questionId);
+      } else {
+        next.add(questionId);
+      }
+      return next;
+    });
+
+    startBookmarkTransition(async () => {
+      const result = await toggleBookmarkAction(questionId);
+      if (result.error) {
+        toast.error("ブックマークの更新に失敗しました");
+        // Rollback
+        setBookmarkedIds(prev => {
+          const next = new Set(prev);
+          if (isCurrentlyBookmarked) {
+            next.add(questionId);
+          } else {
+            next.delete(questionId);
+          }
+          return next;
+        });
+      } else {
+        toast.success(result.bookmarked ? "ブックマークに追加しました" : "ブックマークを解除しました");
+      }
+    });
+  };
+
   if (isFinished) {
     const correctCount = answers.length > 0 
       ? answers.filter(a => a.isCorrect).length 
-      : questions.length // If already completed, we don't have local answers, but assume success for UI
+      : questions.length // If already completed, we don't have local answers
 
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header user={user} />
+        <Header userEmail={userEmail} streak={streak} />
         <main className="flex-grow flex items-center justify-center p-4">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -95,7 +147,7 @@ export function DailyChallengeClient({ questions, user, isCompleted: initialComp
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-      <Header user={user} />
+      <Header userEmail={userEmail} streak={streak} />
       
       <main className="container mx-auto px-4 py-8 max-w-3xl flex-grow flex flex-col">
         {/* Progress Header */}
@@ -121,88 +173,30 @@ export function DailyChallengeClient({ questions, user, isCompleted: initialComp
           </div>
         </div>
 
-        {/* Question Card */}
-        <div className="flex-grow flex flex-col">
+        {/* Question Area */}
+        <div className="flex-grow flex flex-col items-center">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={currentIndex}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-8"
-            >
-              <div className="qz-card p-8 md:p-10">
-                <div className="inline-block px-3 py-1 bg-qz-blue/10 text-qz-blue text-[10px] font-black rounded-lg mb-4 uppercase tracking-widest border border-qz-blue/20">
-                  Category {currentIndex + 1}
-                </div>
-                <h3 className="text-xl md:text-2xl font-black leading-tight text-qz-text dark:text-white">
-                  {currentQuestion.content}
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                {currentQuestion.options.map((option: string, idx: number) => {
-                  const isSelected = selectedOption === option;
-                  const isCorrect = option === currentQuestion.answer;
-                  
-                  let buttonClass = "qz-card p-6 text-left font-bold transition-all duration-200 flex justify-between items-center group";
-                  if (showExplanation) {
-                    if (isCorrect) {
-                      buttonClass = "qz-card p-6 text-left font-bold border-qz-success bg-qz-success/5 text-qz-success flex justify-between items-center";
-                    } else if (isSelected) {
-                      buttonClass = "qz-card p-6 text-left font-bold border-qz-error bg-qz-error/5 text-qz-error flex justify-between items-center";
-                    } else {
-                      buttonClass = "qz-card p-6 text-left font-bold opacity-50 flex justify-between items-center cursor-default";
-                    }
-                  } else {
-                    buttonClass += " hover:border-qz-blue hover:translate-x-1";
-                  }
-
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => handleSelectOption(option)}
-                      disabled={showExplanation}
-                      className={buttonClass}
-                    >
-                      <span className="flex-grow">{option}</span>
-                      {showExplanation && isCorrect && <CheckCircle2 className="w-6 h-6 flex-shrink-0" />}
-                      {showExplanation && isSelected && !isCorrect && <AlertCircle className="w-6 h-6 flex-shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
+            <QuestionCard 
+              key={currentQuestion.id}
+              question={currentQuestion}
+              selectedOption={selectedOption}
+              onSelectOption={handleSelectOption}
+              isAnswered={showExplanation}
+              isBookmarked={bookmarkedIds.has(currentQuestion.id)}
+              onToggleBookmark={handleToggleBookmark}
+            />
           </AnimatePresence>
 
-          {/* Explanation Area */}
-          <div className="h-40 mt-8">
-            <AnimatePresence>
-              {showExplanation && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-6"
-                >
-                  <div className="bg-white dark:bg-[#1A1D23] p-6 rounded-2xl border-l-4 border-qz-blue shadow-sm">
-                    <h4 className="font-black text-qz-blue text-sm mb-1 uppercase tracking-tight">解説</h4>
-                    <p className="text-qz-text-light font-bold text-sm leading-relaxed">
-                      {currentQuestion.explanation}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={handleNext}
-                    disabled={isSaving}
-                    className="w-full qz-btn-primary py-5 text-lg flex items-center justify-center gap-3 shadow-xl shadow-qz-blue/20"
-                  >
-                    {isSaving ? '保存中...' : (currentIndex === questions.length - 1 ? 'チャレンジ完了' : '次の問題へ')}
-                    {!isSaving && <ArrowRight className="w-6 h-6" />}
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <AnimatePresence>
+            {showExplanation && (
+              <ExplanationArea 
+                isCorrect={isCorrect}
+                explanation={currentQuestion.explanation}
+                onNext={handleNext}
+                isLoading={isSaving}
+              />
+            )}
+          </AnimatePresence>
         </div>
       </main>
     </div>

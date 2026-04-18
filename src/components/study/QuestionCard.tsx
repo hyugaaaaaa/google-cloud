@@ -3,20 +3,24 @@
 import React from 'react';
 import type { Question } from '@/types/app.types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, XCircle, Info } from 'lucide-react';
+import { CheckCircle2, XCircle, Info, Star } from 'lucide-react';
 
 type QuestionCardProps = {
   question: Question;
   selectedOption: string | null;
   onSelectOption: (option: string) => void;
   isAnswered: boolean;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 };
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({
   question,
   selectedOption,
   onSelectOption,
-  isAnswered
+  isAnswered,
+  isBookmarked = false,
+  onToggleBookmark
 }) => {
   return (
     <motion.div 
@@ -28,10 +32,29 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       <div className="bg-white dark:bg-[#1A1D23] rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-qz-border dark:border-[#2E3856] overflow-hidden">
         {/* Card Header */}
         <div className="px-8 pt-8 pb-4">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center justify-between mb-4">
             <div className="px-3 py-1 bg-qz-blue/10 text-qz-blue text-[10px] font-black uppercase tracking-widest rounded-full">
               Question
             </div>
+
+            {onToggleBookmark && (
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleBookmark();
+                }}
+                className={`p-2 rounded-full transition-colors ${
+                  isBookmarked 
+                    ? 'text-qz-yellow bg-qz-yellow/10' 
+                    : 'text-qz-text-light hover:bg-qz-bg dark:hover:bg-[#2E3856]'
+                }`}
+                title={isBookmarked ? "ブックマークを解除" : "ブックマークに追加"}
+              >
+                <Star className={`w-6 h-6 ${isBookmarked ? 'fill-qz-yellow' : ''}`} />
+              </motion.button>
+            )}
           </div>
           <h2 className="text-2xl md:text-3xl font-black mb-8 text-qz-text dark:text-white leading-tight">
             {question.content}

@@ -60,15 +60,31 @@ export default async function DailyChallengePage() {
     .eq('study_mode', 'daily')
     .gte('created_at', startOfDay.toISOString())
 
-  const isCompleted = existingHistories && existingHistories.length >= 6
+  const isCompleted = !!(existingHistories && existingHistories.length >= 6)
+
+  const { data: bookmarkData } = await supabase
+    .from('bookmarks')
+    .select('question_id')
+    .eq('user_id', user.id)
+  
+  const initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
+
+  // プロフィールを取得（streak用）
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('streak_count')
+    .eq('id', user.id)
+    .single()
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg text-qz-text dark:text-qz-text">
       <DailyChallengeClient 
         questions={dailyQuestions} 
-        user={user} 
+        userEmail={user.email || ''} 
+        streak={profile?.streak_count || 0}
         isCompleted={isCompleted}
         dateString={jstDate}
+        initialBookmarkedIds={initialBookmarkedIds}
       />
     </div>
   )

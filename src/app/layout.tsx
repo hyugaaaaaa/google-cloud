@@ -1,8 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/common/ThemeProvider";
 import { Toaster } from "sonner";
+import { PWARegistration } from "@/components/common/PWARegistration";
+import { OfflineBanner } from "@/components/common/OfflineBanner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -12,6 +14,16 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "CloudMaster | Google Cloud CDL 資格対策",
   description: "忙しい社会人のための、Quizlet風モバイルフレンドリー学習アプリ",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CloudMaster",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#4285F4",
 };
 
 export default function RootLayout({
@@ -32,6 +44,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <PWARegistration />
+          <OfflineBanner />
           {children}
           <Toaster position="top-center" richColors />
         </ThemeProvider>

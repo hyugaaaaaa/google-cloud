@@ -9,18 +9,15 @@ export default async function CategoryStudyPage({
 }: {
   params: Promise<{ categoryId: string }> | { categoryId: string }
 }) {
-  // In Next.js 15, params is treated as a Promise in Server Components. We resolve it here.
   const resolvedParams = await params
   const categoryId = decrypt(resolvedParams.categoryId)
 
   if (!categoryId) {
-    // 復号に失敗した場合はホームへ戻す（セキュリティおよびURL期限切れ対策）
     redirect('/')
   }
 
   const supabase = await createClient()
 
-  // ユーザー情報を取得
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     redirect('/login')
@@ -37,9 +34,6 @@ export default async function CategoryStudyPage({
     return <div className="p-8 text-red-500 text-center">問題の読み込みに失敗しました。</div>
   }
 
-  // Next.js 15 requires serialization, so we cast it safely if needed.
-  // We parse the options field if it happens to come back as a string from JSONB. 
-  // Typically, Supabase client parses JSONB to JSON automatically.
   const processedQuestions: Question[] = (questions || []).map(q => ({
     id: q.id,
     category_id: q.category_id,
@@ -50,5 +44,23 @@ export default async function CategoryStudyPage({
     created_at: q.created_at
   }))
 
-  return <StudyClient questions={processedQuestions} user={user} />
+  const { data: bookmarkData } = await supabase
+    .from('bookmarks')
+    .select('question_id')
+    .eq('user_id', user.id)
+  
+  const initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('streak_count')
+    .eq('id', user.id)
+    .single()
+
+  return <StudyClient 
+    questions={processedQuestions} 
+    userEmail={user.email || ''} 
+    streak={profile?.streak_count || 0}
+    initialBookmarkedIds={initialBookmarkedIds} 
+  />
 }

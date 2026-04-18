@@ -33,10 +33,19 @@ export default async function ReviewPage() {
     .filter(([_, isCorrect]) => !isCorrect)
     .map(([id, _]) => id)
 
+  // プロフィールを取得（streak用）
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('streak_count')
+    .eq('id', user.id)
+    .single()
+
+  const streak = profile?.streak_count || 0
+
   if (wrongQuestionIds.length === 0) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header user={user} />
+        <Header userEmail={user.email || ''} streak={streak} />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="qz-card p-12 text-center max-w-lg">
             <h2 className="text-2xl font-black mb-4">完璧です！</h2>
@@ -70,9 +79,25 @@ export default async function ReviewPage() {
     created_at: q.created_at
   }))
 
+  // ブックマーク情報の取得
+  const { data: bookmarkData } = await supabase
+    .from('bookmarks')
+    .select('question_id')
+    .eq('user_id', user.id)
+  
+  const initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
+
   return (
-    <div className="min-h-screen bg-qz-bg dark:bg-qz-bg">
-      <StudyClient questions={processedQuestions} />
+    <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
+      <Header userEmail={user.email || ''} streak={streak} />
+      <div className="flex-1">
+        <StudyClient 
+          questions={processedQuestions} 
+          userEmail={user.email || ''} 
+          streak={streak}
+          initialBookmarkedIds={initialBookmarkedIds} 
+        />
+      </div>
     </div>
   )
 }

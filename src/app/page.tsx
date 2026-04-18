@@ -44,7 +44,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg text-qz-text dark:text-qz-text selection:bg-qz-blue/20">
-      <Header user={user} streak={streak} />
+      <Header userEmail={user?.email || ''} streak={streak} />
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
         {/* Hero Section */}

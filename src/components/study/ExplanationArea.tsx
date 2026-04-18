@@ -8,12 +8,14 @@ type ExplanationAreaProps = {
   isCorrect: boolean;
   explanation: string;
   onNext: () => void;
+  isLoading?: boolean;
 };
 
 export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
   isCorrect,
   explanation,
-  onNext
+  onNext,
+  isLoading = false
 }) => {
   return (
     <motion.div 
@@ -48,10 +50,11 @@ export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
 
         <button 
           onClick={onNext}
-          className="qz-btn-primary w-full flex items-center justify-center gap-3 group shadow-lg shadow-qz-blue/20"
+          disabled={isLoading}
+          className="qz-btn-primary w-full flex items-center justify-center gap-3 group shadow-lg shadow-qz-blue/20 disabled:opacity-50"
         >
-          <span className="text-xl">次の問題へ</span>
-          <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+          <span className="text-xl">{isLoading ? '保存中...' : '次の問題へ'}</span>
+          {!isLoading && <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />}
         </button>
       </div>
     </motion.div>

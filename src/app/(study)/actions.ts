@@ -148,3 +148,42 @@ export async function updateStreakAction() {
     return { success: true, streak: 1 }
   }
 }
+
+/**
+ * ブックマークの切り替えを行うアクション
+ */
+export async function toggleBookmarkAction(questionId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authorized' }
+
+  // 既にブックマークされているか確認
+  const { data: existing } = await supabase
+    .from('bookmarks')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('question_id', questionId)
+    .single()
+
+  if (existing) {
+    // 削除
+    const { error } = await supabase
+      .from('bookmarks')
+      .delete()
+      .eq('id', existing.id)
+    
+    if (error) return { error: error.message }
+    return { success: true, bookmarked: false }
+  } else {
+    // 追加
+    const { error } = await supabase
+      .from('bookmarks')
+      .insert({
+        user_id: user.id,
+        question_id: questionId
+      })
+    
+    if (error) return { error: error.message }
+    return { success: true, bookmarked: true }
+  }
+}

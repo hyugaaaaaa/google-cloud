@@ -45,13 +45,25 @@ export default async function MockExamPage() {
     created_at: q.created_at
   }))
 
-  if (processedQuestions.length === 0) {
-    return <div className="min-h-screen flex items-center justify-center p-8">出題可能な問題がありません。</div>
-  }
+  // ブックマーク情報の取得
+  const { data: bookmarkData } = await supabase
+    .from('bookmarks')
+    .select('question_id')
+    .eq('user_id', user.id)
+  
+  const initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
-      <MockExamClient questions={processedQuestions} />
-    </div>
-  )
+  // プロフィールを取得（streak用）
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('streak_count')
+    .eq('id', user.id)
+    .single()
+
+  return <MockExamClient 
+    questions={processedQuestions} 
+    userEmail={user.email || ''} 
+    streak={profile?.streak_count || 0}
+    initialBookmarkedIds={initialBookmarkedIds} 
+  />
 }

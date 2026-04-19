@@ -12,9 +12,11 @@ export default async function AdminQuestionsPage({
   const query = searchParams.q || ''
   const supabase = await createClient()
 
-  // 認証チェック
+  // 認証・管理者チェック
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  const isAdmin = user?.email === 'hyuga0510@icloud.com'
+
+  if (!isAdmin) {
     return <div className="p-20 text-center font-bold">管理者権限が必要です</div>
   }
 

@@ -11,10 +11,10 @@ export async function updateQuestionAction(id: string, updates: {
 }) {
   const supabase = await createClient()
 
-  // 認証チェック（必要に応じて）
+  // 認証・管理者チェック
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: '認証が必要です' }
+  if (user?.email !== 'hyuga0510@icloud.com') {
+    return { error: '管理者権限が必要です' }
   }
 
   const { error } = await supabase
@@ -36,6 +36,12 @@ export async function updateQuestionAction(id: string, updates: {
 
 export async function deleteQuestionAction(id: string) {
   const supabase = await createClient()
+
+  // 認証・管理者チェック
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user?.email !== 'hyuga0510@icloud.com') {
+    return { error: '管理者権限が必要です' }
+  }
 
   const { error } = await supabase
     .from('questions')

@@ -46,6 +46,10 @@ self.addEventListener('fetch', (event) => {
             cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
+        }).catch(() => {
+          // ネットワークエラー時は単にエラーを返さず、
+          // 呼び出し側の.catch()に委ねる（Uncaughtエラーを防ぐ）
+          return null;
         });
 
         // キャッシュがあればそれを返しつつ裏で更新、なければネットワークを待つ

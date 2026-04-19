@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/common/Header'
 import { QuestionEditor } from '@/components/admin/QuestionEditor'
-import { Search, Plus } from 'lucide-react'
+import { CategoryFilter } from '@/components/admin/CategoryFilter'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -88,35 +89,11 @@ export default async function AdminQuestionsPage({
             <p className="text-qz-text-light font-bold">問題の管理・修正・追加</p>
           </div>
           <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-            <form className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <div className="relative flex-1 md:w-80">
-                <input 
-                  type="text"
-                  name="q"
-                  defaultValue={query}
-                  placeholder="問題を検索..."
-                  className="qz-input w-full pl-12 h-14"
-                />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-qz-text-light" size={20} />
-              </div>
-              
-              <select 
-                name="category"
-                defaultValue={categoryId}
-                onChange={(e) => {
-                  const form = e.currentTarget.form;
-                  if (form) form.requestSubmit();
-                }}
-                className="qz-input h-14 px-4 bg-white dark:bg-[#2E3856] min-w-[200px]"
-              >
-                <option value="">全てのカテゴリ</option>
-                {categories?.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-
-              <button type="submit" className="hidden">検索</button>
-            </form>
+            <CategoryFilter 
+              categories={categories || []} 
+              initialQuery={query} 
+              initialCategoryId={categoryId} 
+            />
             {/* Add functionality later */}
             <button className="qz-btn-primary h-14 px-6 flex items-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed">
               <Plus size={24} /> 新規作成

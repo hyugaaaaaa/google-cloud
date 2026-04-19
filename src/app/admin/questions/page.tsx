@@ -30,7 +30,7 @@ export default async function AdminQuestionsPage({
   // Fetch questions
   let dbQuery = supabase
     .from('questions')
-    .select('*, categories(name)')
+    .select('*')
     .order('created_at', { ascending: false })
 
   if (query) {

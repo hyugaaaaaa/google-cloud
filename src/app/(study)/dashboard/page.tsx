@@ -10,6 +10,8 @@ import { BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 import { encrypt } from '@/lib/crypto'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const supabase = await createClient()
 

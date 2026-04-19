@@ -7,9 +7,10 @@ import Link from 'next/link'
 export default async function AdminQuestionsPage({
   searchParams,
 }: {
-  searchParams: { q?: string }
+  searchParams: { q?: string; category?: string }
 }) {
   const query = searchParams.q || ''
+  const categoryId = searchParams.category || ''
   const supabase = await createClient()
 
   // 認証・管理者チェック
@@ -20,14 +21,24 @@ export default async function AdminQuestionsPage({
     return <div className="p-20 text-center font-bold">管理者権限が必要です</div>
   }
 
+  // Fetch categories for the filter
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name')
+    .order('name')
+
   // Fetch questions
   let dbQuery = supabase
     .from('questions')
-    .select('*')
+    .select('*, categories(name)')
     .order('created_at', { ascending: false })
 
   if (query) {
     dbQuery = dbQuery.ilike('content', `%${query}%`)
+  }
+
+  if (categoryId) {
+    dbQuery = dbQuery.eq('category_id', categoryId)
   }
 
   const { data: questions, error } = await dbQuery
@@ -42,16 +53,35 @@ export default async function AdminQuestionsPage({
             <h1 className="text-4xl font-black italic tracking-tighter uppercase mb-2">Admin Dashboard</h1>
             <p className="text-qz-text-light font-bold">問題の管理・修正・追加</p>
           </div>
-          <div className="flex gap-4 w-full md:w-auto">
-            <form className="relative flex-1 md:w-80">
-              <input 
-                type="text"
-                name="q"
-                defaultValue={query}
-                placeholder="問題を検索..."
-                className="qz-input w-full pl-12 h-14"
-              />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-qz-text-light" size={20} />
+          <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+            <form className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <div className="relative flex-1 md:w-80">
+                <input 
+                  type="text"
+                  name="q"
+                  defaultValue={query}
+                  placeholder="問題を検索..."
+                  className="qz-input w-full pl-12 h-14"
+                />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-qz-text-light" size={20} />
+              </div>
+              
+              <select 
+                name="category"
+                defaultValue={categoryId}
+                onChange={(e) => {
+                  const form = e.currentTarget.form;
+                  if (form) form.requestSubmit();
+                }}
+                className="qz-input h-14 px-4 bg-white dark:bg-[#2E3856] min-w-[200px]"
+              >
+                <option value="">全てのカテゴリ</option>
+                {categories?.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+
+              <button type="submit" className="hidden">検索</button>
             </form>
             {/* Add functionality later */}
             <button className="qz-btn-primary h-14 px-6 flex items-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed">

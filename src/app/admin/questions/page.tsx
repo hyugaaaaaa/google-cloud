@@ -44,6 +44,12 @@ export default async function AdminQuestionsPage({
 
   const { data: questions, error } = await dbQuery
 
+  // 型の整合性を整える（optionsが文字列で届くケースに対応）
+  const processedQuestions = (questions || []).map(q => ({
+    ...q,
+    options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+  }))
+
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg">
       <Header userEmail={user.email} />
@@ -97,10 +103,10 @@ export default async function AdminQuestionsPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {questions?.map((q) => (
+            {processedQuestions.map((q) => (
               <QuestionEditor key={q.id} question={q} />
             ))}
-            {questions?.length === 0 && (
+            {processedQuestions.length === 0 && (
               <div className="col-span-full qz-card p-20 text-center text-qz-text-light font-bold">
                 該当する問題が見つかりませんでした
               </div>

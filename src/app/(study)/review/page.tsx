@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { StudyClient } from '../category/[categoryId]/StudyClient'
+import { StudyClient } from '@/app/(study)/category/[categoryId]/StudyClient'
 import { Header } from '@/components/common/Header'
 import type { Question } from '@/types/app.types'
 
@@ -87,17 +87,13 @@ export default async function ReviewPage() {
   
   const initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
 
+  // StudyClient自体がHeaderを含んでいるため、ここでは直接返す
   return (
-    <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-      <Header userEmail={user.email || ''} streak={streak} />
-      <div className="flex-1">
-        <StudyClient 
-          questions={processedQuestions} 
-          userEmail={user.email || ''} 
-          streak={streak}
-          initialBookmarkedIds={initialBookmarkedIds} 
-        />
-      </div>
-    </div>
+    <StudyClient 
+      questions={processedQuestions} 
+      userEmail={user.email || ''} 
+      streak={streak}
+      initialBookmarkedIds={initialBookmarkedIds} 
+    />
   )
 }

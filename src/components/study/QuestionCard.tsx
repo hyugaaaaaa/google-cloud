@@ -2,8 +2,7 @@
 
 import React from 'react';
 import type { Question } from '@/types/app.types';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, XCircle, Info, Star } from 'lucide-react';
+import { CheckCircle2, XCircle, Star } from 'lucide-react';
 
 type QuestionCardProps = {
   question: Question;
@@ -23,12 +22,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   onToggleBookmark
 }) => {
   return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.95, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="w-full max-w-2xl mx-auto"
-    >
+    <div className="w-full max-w-2xl mx-auto transition-all duration-500 ease-out translate-y-0 opacity-100">
       <div className="bg-white dark:bg-[#1A1D23] rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-qz-border dark:border-[#2E3856] overflow-hidden">
         {/* Card Header */}
         <div className="px-8 pt-8 pb-4">
@@ -38,14 +32,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             </div>
 
             {onToggleBookmark && (
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleBookmark();
                 }}
-                className={`p-2 rounded-full transition-colors ${
+                className={`p-2 rounded-full transition-all active:scale-90 ${
                   isBookmarked 
                     ? 'text-qz-yellow bg-qz-yellow/10' 
                     : 'text-qz-text-light hover:bg-qz-bg dark:hover:bg-[#2E3856]'
@@ -53,7 +45,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 title={isBookmarked ? "ブックマークを解除" : "ブックマークに追加"}
               >
                 <Star className={`w-6 h-6 ${isBookmarked ? 'fill-qz-yellow' : ''}`} />
-              </motion.button>
+              </button>
             )}
           </div>
           <h2 className="text-2xl md:text-3xl font-black mb-8 text-qz-text dark:text-white leading-tight">
@@ -68,7 +60,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             const isCorrectAnswer = isAnswered && option === String(question.answer);
             const isWrongSelection = isAnswered && isSelected && option !== String(question.answer);
 
-            let btnBaseClass = "relative w-full text-left px-6 py-4 rounded-xl border-2 font-bold transition-all flex items-center justify-between group ";
+            let btnBaseClass = "relative w-full text-left px-6 py-4 rounded-xl border-2 font-bold transition-all flex items-center justify-between group active:scale-[0.99] ";
             let statusIcon = null;
 
             if (!isAnswered) {
@@ -88,10 +80,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             }
 
             return (
-              <motion.button
+              <button
                 key={idx}
-                whileHover={!isAnswered ? { scale: 1.01 } : {}}
-                whileTap={!isAnswered ? { scale: 0.99 } : {}}
                 className={btnBaseClass}
                 onClick={() => !isAnswered && onSelectOption(option)}
                 disabled={isAnswered}
@@ -109,11 +99,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                   <span className="flex-1">{option}</span>
                 </div>
                 {statusIcon}
-              </motion.button>
+              </button>
             );
           })}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };

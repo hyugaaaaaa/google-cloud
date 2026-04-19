@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import React, { useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trophy, Home, RotateCcw, LayoutDashboard, ArrowRight, Zap, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Trophy, Home, LayoutDashboard, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { saveBulkHistoryAction, toggleBookmarkAction } from '@/app/(study)/actions'
 import { Header } from '@/components/common/Header'
 import { QuestionCard } from '@/components/study/QuestionCard'
 import { ExplanationArea } from '@/components/study/ExplanationArea'
+import { useDailyChallenge } from '@/hooks/useDailyChallenge'
 import { toast } from 'sonner'
 
 export function DailyChallengeClient({ 
@@ -25,45 +26,34 @@ export function DailyChallengeClient({
   dateString: string,
   initialBookmarkedIds?: string[]
 }) {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers] = useState<any[]>([])
-  const [isFinished, setIsFinished] = useState(initialCompleted)
-  const [selectedOption, setSelectedOption] = useState<string | null>(null)
-  const [showExplanation, setShowExplanation] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(initialBookmarkedIds));
   const [isBookmarkPending, startBookmarkTransition] = useTransition();
 
-  const currentQuestion = questions[currentIndex]
-  const isCorrect = selectedOption === currentQuestion?.answer
-
-  const handleSelectOption = (option: string) => {
-    if (showExplanation) return
-    setSelectedOption(option)
-    setShowExplanation(true)
-    
-    const correct = option === currentQuestion.answer
-    setAnswers([...answers, {
-      questionId: currentQuestion.id,
-      isCorrect: correct,
-      userAnswer: option
-    }])
-  }
-
-  const handleNext = async () => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1)
-      setSelectedOption(null)
-      setShowExplanation(false)
-    } else {
-      // Finish
-      setIsSaving(true)
-      const finalAnswers = [...answers]
-      await saveBulkHistoryAction(finalAnswers, 'daily')
-      setIsFinished(true)
-      setIsSaving(false)
+  const {
+    currentIndex,
+    selectedOption,
+    showExplanation,
+    isFinished,
+    isSaving,
+    answers,
+    currentQuestion,
+    totalQuestions,
+    isCorrect,
+    selectOption,
+    nextQuestion
+  } = useDailyChallenge({
+    questions,
+    initialCompleted,
+    onFinish: async (finalAnswers) => {
+      try {
+        await saveBulkHistoryAction(finalAnswers, 'daily');
+        toast.success("チャレンジを記録しました！");
+      } catch (error) {
+        console.error("Failed to save daily history:", error);
+        toast.error("履歴の保存に失敗しました");
+      }
     }
-  }
+  });
 
   const handleToggleBookmark = () => {
     if (!currentQuestion) return;
@@ -96,8 +86,6 @@ export function DailyChallengeClient({
           }
           return next;
         });
-      } else {
-        toast.success(result.bookmarked ? "ブックマークに追加しました" : "ブックマークを解除しました");
       }
     });
   };
@@ -105,7 +93,7 @@ export function DailyChallengeClient({
   if (isFinished) {
     const correctCount = answers.length > 0 
       ? answers.filter(a => a.isCorrect).length 
-      : questions.length // If already completed, we don't have local answers
+      : questions.length 
 
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
@@ -128,7 +116,7 @@ export function DailyChallengeClient({
 
             <div className="bg-qz-bg dark:bg-[#2E3856] p-6 rounded-2xl border border-qz-border dark:border-[#2E3856]">
               <span className="block text-[10px] font-black uppercase text-qz-text-light mb-2">本日のスコア</span>
-              <span className="text-4xl font-black italic text-qz-blue">{correctCount} / {questions.length}</span>
+              <span className="text-4xl font-black italic text-qz-blue">{correctCount} / {totalQuestions}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -144,6 +132,8 @@ export function DailyChallengeClient({
       </div>
     )
   }
+
+  if (!currentQuestion) return null;
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
@@ -162,12 +152,12 @@ export function DailyChallengeClient({
             </div>
           </div>
           <div className="text-right">
-            <span className="text-sm font-black italic text-qz-blue">{currentIndex + 1} / {questions.length}</span>
+            <span className="text-sm font-black italic text-qz-blue">{currentIndex + 1} / {totalQuestions}</span>
             <div className="w-32 h-2 bg-qz-border dark:bg-[#2E3856] rounded-full mt-1 overflow-hidden">
               <motion.div 
                 className="h-full bg-qz-blue"
                 initial={{ width: 0 }}
-                animate={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+                animate={{ width: `${((currentIndex + 1) / totalQuestions) * 100}%` }}
               />
             </div>
           </div>
@@ -180,7 +170,7 @@ export function DailyChallengeClient({
               key={currentQuestion.id}
               question={currentQuestion}
               selectedOption={selectedOption}
-              onSelectOption={handleSelectOption}
+              onSelectOption={selectOption}
               isAnswered={showExplanation}
               isBookmarked={bookmarkedIds.has(currentQuestion.id)}
               onToggleBookmark={handleToggleBookmark}
@@ -192,7 +182,7 @@ export function DailyChallengeClient({
               <ExplanationArea 
                 isCorrect={isCorrect}
                 explanation={currentQuestion.explanation}
-                onNext={handleNext}
+                onNext={nextQuestion}
                 isLoading={isSaving}
               />
             )}

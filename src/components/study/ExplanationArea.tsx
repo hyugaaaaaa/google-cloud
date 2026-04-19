@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
 
 type ExplanationAreaProps = {
@@ -18,10 +17,8 @@ export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
   isLoading = false
 }) => {
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`w-full max-w-2xl mx-auto rounded-[24px] overflow-hidden mt-6 border-2 ${
+    <div 
+      className={`w-full max-w-2xl mx-auto rounded-[24px] overflow-hidden mt-6 border-2 transition-all duration-500 ease-out opacity-100 translate-y-0 ${
         isCorrect 
           ? 'bg-qz-success/5 border-qz-success/20 shadow-[0_8px_32px_rgba(35,178,109,0.05)]' 
           : 'bg-qz-error/5 border-qz-error/20 shadow-[0_8px_32px_rgba(255,114,94,0.05)]'
@@ -51,12 +48,12 @@ export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
         <button 
           onClick={onNext}
           disabled={isLoading}
-          className="qz-btn-primary w-full flex items-center justify-center gap-3 group shadow-lg shadow-qz-blue/20 disabled:opacity-50"
+          className="qz-btn-primary w-full flex items-center justify-center gap-3 group shadow-lg shadow-qz-blue/20 disabled:opacity-50 active:scale-[0.98] transition-all"
         >
           <span className="text-xl">{isLoading ? '保存中...' : '次の問題へ'}</span>
           {!isLoading && <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />}
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 };

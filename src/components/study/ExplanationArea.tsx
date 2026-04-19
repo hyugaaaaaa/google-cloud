@@ -20,30 +20,34 @@ export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
 }) => {
   return (
     <div 
-      className={`w-full max-w-2xl mx-auto rounded-[24px] overflow-hidden mt-6 border-2 transition-all duration-500 ease-out opacity-100 translate-y-0 ${
+      className={`w-full max-w-2xl mx-auto rounded-[24px] overflow-hidden mt-6 border-2 transition-all duration-500 ease-out opacity-100 translate-y-0 p-8 ${
         isCorrect 
           ? 'bg-qz-success/5 border-qz-success/20 shadow-[0_8px_32px_rgba(35,178,109,0.05)]' 
           : 'bg-qz-error/5 border-qz-error/20 shadow-[0_8px_32px_rgba(255,114,94,0.05)]'
       }`}
     >
-      <div className="p-8">
-        <div className="flex items-center gap-3 mb-4">
-          {isCorrect ? (
-            <CheckCircle2 className="w-8 h-8 text-qz-success" />
-          ) : (
-            <XCircle className="w-8 h-8 text-qz-error" />
-          )}
-          <h3 className={`text-2xl font-black ${isCorrect ? 'text-qz-success' : 'text-qz-error'}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 flex-1">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
+            isCorrect ? 'bg-qz-success/20 text-qz-success' : 'bg-qz-error/20 text-qz-error'
+          }`}>
+            {isCorrect ? <CheckCircle2 size={24} /> : <XCircle size={24} />}
+          </div>
+          <h3 className={`text-xl md:text-2xl font-black leading-tight ${isCorrect ? 'text-qz-success' : 'text-qz-error'}`}>
             {isCorrect ? '素晴らしい！正解です' : '惜しい...次は頑張りましょう'}
           </h3>
-          {correctLabel && (
-            <div className={`ml-auto px-4 py-1.5 rounded-xl font-black text-xl border-2 ${
-              isCorrect ? 'bg-qz-success text-white border-qz-success' : 'bg-white dark:bg-[#1A1D23] text-qz-error border-qz-error'
-            }`}>
-              正解: {correctLabel}
-            </div>
-          )}
         </div>
+        
+        {correctLabel && (
+          <div className={`w-fit px-5 py-2 rounded-2xl font-black text-lg md:text-xl border-2 shadow-sm ${
+            isCorrect 
+              ? 'bg-qz-success text-white border-qz-success' 
+              : 'bg-white dark:bg-[#1A1D23] text-qz-error border-qz-error sm:ml-auto'
+          }`}>
+            <span className="opacity-80 text-sm md:text-base mr-1">正解:</span> {correctLabel}
+          </div>
+        )}
+      </div>
         
         <div className="bg-white dark:bg-[#2E3856] rounded-[16px] p-6 mb-8 border border-qz-border dark:border-[#2E3856]">
           <h4 className="text-xs font-black uppercase tracking-widest text-qz-text-light mb-3">

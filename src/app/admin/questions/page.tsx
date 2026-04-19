@@ -7,10 +7,11 @@ import Link from 'next/link'
 export default async function AdminQuestionsPage({
   searchParams,
 }: {
-  searchParams: { q?: string; category?: string }
+  searchParams: Promise<{ q?: string; category?: string }>
 }) {
-  const query = searchParams.q || ''
-  const categoryId = searchParams.category || ''
+  const resolvedParams = await searchParams
+  const query = resolvedParams.q || ''
+  const categoryId = resolvedParams.category || ''
   const supabase = await createClient()
 
   // 認証・管理者チェック

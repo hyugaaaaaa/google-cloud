@@ -22,8 +22,8 @@ export default function DashboardLoading() {
         <div className="qz-card p-8 mb-12">
           <Skeleton className="h-8 w-48 mb-8" />
           <div className="flex items-end gap-4 h-64">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <Skeleton key={i} className="flex-1" style={{ height: `${Math.random() * 60 + 20}%` }} />
+            {[40, 70, 45, 90, 65, 30, 80].map((height, i) => (
+              <Skeleton key={i} className="flex-1" style={{ height: `${height}%` }} />
             ))}
           </div>
         </div>

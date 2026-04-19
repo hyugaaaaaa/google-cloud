@@ -144,6 +144,9 @@ export function StudyClient({
 
   const isCorrect = selectedOption === currentQuestion.answer;
 
+  const correctIndex = currentQuestion.options.indexOf(currentQuestion.answer);
+  const correctLabel = correctIndex !== -1 ? String.fromCharCode(65 + correctIndex) : '';
+
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
       <Header userEmail={userEmail} streak={streak} />
@@ -168,6 +171,7 @@ export function StudyClient({
                 isCorrect={isCorrect}
                 explanation={currentQuestion.explanation}
                 onNext={nextQuestion}
+                correctLabel={correctLabel}
               />
             </div>
           )}

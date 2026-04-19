@@ -7,13 +7,15 @@ type ExplanationAreaProps = {
   isCorrect: boolean;
   explanation: string;
   onNext: () => void;
+  correctLabel?: string;
   isLoading?: boolean;
-};
+}
 
 export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
   isCorrect,
   explanation,
   onNext,
+  correctLabel,
   isLoading = false
 }) => {
   return (
@@ -34,6 +36,13 @@ export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
           <h3 className={`text-2xl font-black ${isCorrect ? 'text-qz-success' : 'text-qz-error'}`}>
             {isCorrect ? '素晴らしい！正解です' : '惜しい...次は頑張りましょう'}
           </h3>
+          {correctLabel && (
+            <div className={`ml-auto px-4 py-1.5 rounded-xl font-black text-xl border-2 ${
+              isCorrect ? 'bg-qz-success text-white border-qz-success' : 'bg-white dark:bg-[#1A1D23] text-qz-error border-qz-error'
+            }`}>
+              正解: {correctLabel}
+            </div>
+          )}
         </div>
         
         <div className="bg-white dark:bg-[#2E3856] rounded-[16px] p-6 mb-8 border border-qz-border dark:border-[#2E3856]">

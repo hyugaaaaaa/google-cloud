@@ -138,9 +138,14 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
                   </div>
                   
                   <div className="bg-qz-blue/5 dark:bg-[#2E3856] rounded-2xl p-6 border border-qz-blue/10">
-                    <h4 className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-qz-blue mb-2">
-                      <CheckCircle2 size={14} /> Explanation
-                    </h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-qz-blue">
+                        <CheckCircle2 size={14} /> Explanation
+                      </h4>
+                      <div className="px-3 py-1 bg-qz-success/10 text-qz-success text-xs font-black rounded-lg border border-qz-success/20">
+                        正解: {String.fromCharCode(65 + q.options.indexOf(q.answer))}
+                      </div>
+                    </div>
                     <p className="text-[15px] font-bold text-qz-text dark:text-white leading-relaxed italic">
                       {q.explanation || '解説がまだ登録されていません。'}
                     </p>

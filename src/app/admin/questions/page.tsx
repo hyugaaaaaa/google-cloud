@@ -17,11 +17,24 @@ export default async function AdminQuestionsPage({
   const supabase = await createClient()
 
   // 認証・管理者チェック
-  const { data: { user } } = await supabase.auth.getUser()
+  let user;
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch (e) {
+    console.error('Auth error:', e)
+  }
+
   const isAdmin = user?.email === 'hyuga0510@icloud.com'
 
   if (!isAdmin) {
-    return <div className="p-20 text-center font-bold">管理者権限が必要です</div>
+    return (
+      <div className="min-h-screen bg-qz-bg flex flex-col items-center justify-center p-10 text-center">
+        <h1 className="text-2xl font-black mb-4">管理者権限が必要です</h1>
+        <p className="text-qz-text-light mb-8">このページにアクセスするための権限がありません。</p>
+        <Link href="/dashboard" className="qz-btn-primary px-8">ダッシュボードへ戻る</Link>
+      </div>
+    )
   }
 
   // Fetch categories for the filter
@@ -46,10 +59,22 @@ export default async function AdminQuestionsPage({
 
   const { data: questions, error } = await dbQuery
 
-  // 型の整合性を整える（optionsが文字列で届くケースに対応）
+  if (error) {
+    return (
+      <div className="min-h-screen bg-qz-bg flex flex-col items-center justify-center p-10">
+        <div className="qz-card p-12 text-center max-w-lg border-qz-error">
+          <h2 className="text-2xl font-black text-qz-error mb-4">Database Error</h2>
+          <p className="text-qz-text-light mb-8">{error.message}</p>
+          <Link href="/dashboard" className="qz-btn-primary px-8">戻る</Link>
+        </div>
+      </div>
+    )
+  }
+
+  // 型の整合性を整える
   const processedQuestions = (questions || []).map(q => ({
     ...q,
-    options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+    options: typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []),
   }))
 
   return (

@@ -28,9 +28,14 @@ export function Header({ userEmail, streak }: HeaderProps) {
             <Home className="w-4 h-4" /> ホーム
           </Link>
           {userEmail && (
-            <Link href="/dashboard" className="text-[15px] font-bold text-qz-text dark:text-white hover:text-qz-blue transition-colors flex items-center gap-2">
-              <LayoutDashboard className="w-4 h-4" /> ダッシュボード
-            </Link>
+            <>
+              <Link href="/dashboard" className="text-[15px] font-bold text-qz-text dark:text-white hover:text-qz-blue transition-colors flex items-center gap-2">
+                <LayoutDashboard className="w-4 h-4" /> ダッシュボード
+              </Link>
+              <Link href="/admin/questions" className="text-[15px] font-bold text-qz-text-light hover:text-qz-blue transition-colors flex items-center gap-2 border-l border-qz-border pl-8">
+                <Edit2 className="w-4 h-4" /> 管理
+              </Link>
+            </>
           )}
         </nav>
 

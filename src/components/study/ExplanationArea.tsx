@@ -49,24 +49,23 @@ export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
         )}
       </div>
         
-        <div className="bg-white dark:bg-[#2E3856] rounded-[16px] p-6 mb-8 border border-qz-border dark:border-[#2E3856]">
-          <h4 className="text-xs font-black uppercase tracking-widest text-qz-text-light mb-3">
-            解説
-          </h4>
-          <p className="text-[15px] font-bold text-qz-text dark:text-white leading-relaxed">
-            {explanation || 'この問題には解説がありません。'}
-          </p>
-        </div>
-
-        <button 
-          onClick={onNext}
-          disabled={isLoading}
-          className="qz-btn-primary w-full flex items-center justify-center gap-3 group shadow-lg shadow-qz-blue/20 disabled:opacity-50 active:scale-[0.98] transition-all"
-        >
-          <span className="text-xl">{isLoading ? '保存中...' : '次の問題へ'}</span>
-          {!isLoading && <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />}
-        </button>
+      <div className="bg-white dark:bg-[#2E3856] rounded-[16px] p-6 mb-8 border border-qz-border dark:border-[#2E3856]">
+        <h4 className="text-xs font-black uppercase tracking-widest text-qz-text-light mb-3">
+          解説
+        </h4>
+        <p className="text-[15px] font-bold text-qz-text dark:text-white leading-relaxed">
+          {explanation || 'この問題には解説がありません。'}
+        </p>
       </div>
+
+      <button 
+        onClick={onNext}
+        disabled={isLoading}
+        className="qz-btn-primary w-full flex items-center justify-center gap-3 group shadow-lg shadow-qz-blue/20 disabled:opacity-50 active:scale-[0.98] transition-all"
+      >
+        <span className="text-xl">{isLoading ? '保存中...' : '次の問題へ'}</span>
+        {!isLoading && <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />}
+      </button>
     </div>
   );
 };

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { logoutAction } from '@/app/(auth)/actions'
-import { User, LogOut, LayoutDashboard, Home, BookOpen, Flame } from 'lucide-react'
+import { User, LogOut, LayoutDashboard, Home, BookOpen, Flame, Edit2 } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 
 type HeaderProps = {

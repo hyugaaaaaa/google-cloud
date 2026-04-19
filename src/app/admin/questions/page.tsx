@@ -44,11 +44,12 @@ export default async function AdminQuestionsPage({
     .select('id, name')
     .order('name')
 
-  // Fetch questions
+  // Fetch questions (最新50件に制限してハイドレーションを安定させる)
   let dbQuery = supabase
     .from('questions')
     .select('*')
     .order('created_at', { ascending: false })
+    .limit(50)
 
   if (query) {
     dbQuery = dbQuery.ilike('content', `%${query}%`)
@@ -75,7 +76,13 @@ export default async function AdminQuestionsPage({
   // 型の整合性を整える
   const processedQuestions = (questions || []).map(q => ({
     ...q,
-    options: typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || []),
+    // テキストの不一致（改行コードなど）を防ぐためにトリミング
+    content: q.content?.trim() || "",
+    answer: q.answer?.trim() || "",
+    explanation: q.explanation?.trim() || "",
+    options: typeof q.options === 'string' 
+      ? JSON.parse(q.options) 
+      : (Array.isArray(q.options) ? q.options : []),
   }))
 
   return (

@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Timer, ArrowRight, ShieldQuestion, AlertCircle, Star } from 'lucide-react'
 import type { Question } from '@/types/app.types'
 
@@ -59,79 +58,72 @@ export const ExamView: React.FC<ExamViewProps> = ({
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div 
-          key={currentIndex}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          className="qz-card p-10 md:p-14 relative overflow-hidden"
+      <div 
+        key={currentIndex}
+        className="qz-card p-10 md:p-14 relative overflow-hidden transition-all duration-500 ease-out opacity-100 translate-x-0"
+      >
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-qz-yellow"></div>
+        
+        <button
+          onClick={() => onToggleBookmark(currentQuestion.id)}
+          className={`absolute top-8 right-8 p-3 rounded-full transition-all duration-300 z-10 active:scale-90 ${
+            isBookmarked
+              ? 'bg-qz-yellow text-white shadow-lg' 
+              : 'bg-qz-bg dark:bg-[#2E3856] text-qz-text-light hover:text-qz-yellow hover:bg-qz-yellow/10'
+          }`}
         >
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-qz-yellow"></div>
-          
+          <Star size={20} className={isBookmarked ? 'fill-white' : ''} />
+        </button>
+
+        <div className="mb-6">
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-qz-text-light">
+            Category: {currentQuestion.categoryName}
+          </span>
+        </div>
+        
+        <h2 className="text-2xl md:text-3xl font-black text-qz-text dark:text-white mb-12 leading-tight max-w-[90%]">
+          {currentQuestion.content}
+        </h2>
+
+        <div className="space-y-4 mb-14">
+          {currentQuestion.options.map((opt, idx) => {
+            const isSelected = selectedOption === opt
+            return (
+              <button
+                key={idx}
+                onClick={() => onSelectOption(opt)}
+                className={`w-full text-left p-6 rounded-2xl border-2 font-bold text-lg transition-all flex items-center gap-4 active:scale-[0.99] ${
+                  isSelected 
+                    ? 'border-qz-blue bg-qz-blue/5 text-qz-blue shadow-lg shadow-qz-blue/10' 
+                    : 'border-qz-border dark:border-[#2E3856] hover:border-qz-blue/30 bg-white dark:bg-[#1A1D23] text-qz-text dark:text-white'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black transition-colors ${
+                  isSelected ? 'bg-qz-blue text-white border-transparent' : 'border-2 border-qz-border dark:border-[#2E3856] text-qz-text-light'
+                }`}>
+                  {String.fromCharCode(65 + idx)}
+                </div>
+                <span className="flex-1 leading-snug">{opt}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="flex flex-col items-center gap-6">
           <button
-            onClick={() => onToggleBookmark(currentQuestion.id)}
-            className={`absolute top-8 right-8 p-3 rounded-full transition-all duration-300 z-10 ${
-              isBookmarked
-                ? 'bg-qz-yellow text-white shadow-lg' 
-                : 'bg-qz-bg dark:bg-[#2E3856] text-qz-text-light hover:text-qz-yellow hover:bg-qz-yellow/10'
-            }`}
+            onClick={onNext}
+            disabled={!selectedOption}
+            className="qz-btn-primary w-full py-5 text-2xl flex items-center justify-center gap-3 shadow-[0_12px_24px_rgba(66,85,255,0.25)] group active:scale-[0.98] transition-all"
           >
-            <Star size={20} className={isBookmarked ? 'fill-white' : ''} />
+            <span>{currentIndex === totalQuestions - 1 ? '試験を完了する' : '解答して次へ'}</span>
+            <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
           </button>
-
-          <div className="mb-6">
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-qz-text-light">
-              Category: {currentQuestion.categoryName}
-            </span>
-          </div>
           
-          <h2 className="text-2xl md:text-3xl font-black text-qz-text dark:text-white mb-12 leading-tight max-w-[90%]">
-            {currentQuestion.content}
-          </h2>
-
-          <div className="space-y-4 mb-14">
-            {currentQuestion.options.map((opt, idx) => {
-              const isSelected = selectedOption === opt
-              return (
-                <motion.button
-                  key={idx}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  onClick={() => onSelectOption(opt)}
-                  className={`w-full text-left p-6 rounded-2xl border-2 font-bold text-lg transition-all flex items-center gap-4 ${
-                    isSelected 
-                      ? 'border-qz-blue bg-qz-blue/5 text-qz-blue shadow-lg shadow-qz-blue/10' 
-                      : 'border-qz-border dark:border-[#2E3856] hover:border-qz-blue/30 bg-white dark:bg-[#1A1D23] text-qz-text dark:text-white'
-                  }`}
-                >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black transition-colors ${
-                    isSelected ? 'bg-qz-blue text-white border-transparent' : 'border-2 border-qz-border dark:border-[#2E3856] text-qz-text-light'
-                  }`}>
-                    {String.fromCharCode(65 + idx)}
-                  </div>
-                  <span className="flex-1 leading-snug">{opt}</span>
-                </motion.button>
-              )
-            })}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-qz-bg dark:bg-[#2E3856] rounded-xl border border-qz-border dark:border-[#2E3856] text-qz-text-light text-[11px] font-black uppercase tracking-widest">
+            <AlertCircle size={14} /> 一度進むと前の問題には戻れません
           </div>
-
-          <div className="flex flex-col items-center gap-6">
-            <button
-              onClick={onNext}
-              disabled={!selectedOption}
-              className="qz-btn-primary w-full py-5 text-2xl flex items-center justify-center gap-3 shadow-[0_12px_24px_rgba(66,85,255,0.25)] group"
-            >
-              <span>{currentIndex === totalQuestions - 1 ? '試験を完了する' : '解答して次へ'}</span>
-              <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
-            </button>
-            
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-qz-bg dark:bg-[#2E3856] rounded-xl border border-qz-border dark:border-[#2E3856] text-qz-text-light text-[11px] font-black uppercase tracking-widest">
-              <AlertCircle size={14} /> 一度進むと前の問題には戻れません
-            </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 };

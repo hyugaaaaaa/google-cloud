@@ -34,7 +34,7 @@ export function MockExamClient({ questions, userEmail, streak, initialBookmarked
     totalQuestions,
     progress,
     nextQuestion
-  } = useMockExam({
+  } = useMockExam<Question & { categoryName: string }>({
     questions,
     timeLimitSec: EXAM_TIME_LIMIT_SEC,
     onFinish: async (finalAnswers) => {

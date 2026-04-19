@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { motion } from 'framer-motion'
 import { Trophy, LayoutDashboard, AlertCircle, CheckCircle2, XCircle, Star } from 'lucide-react'
 import Link from 'next/link'
 import type { Question } from '@/types/app.types'
@@ -31,10 +30,8 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
 
   return (
     <main className="container mx-auto px-4 py-12 max-w-4xl">
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="qz-card p-10 mb-12 text-center relative overflow-hidden"
+      <div 
+        className="qz-card p-10 mb-12 text-center relative overflow-hidden transition-all duration-500 opacity-100 translate-y-0"
       >
         <div className="absolute top-0 left-0 w-full h-2 bg-qz-blue"></div>
         <div className="w-24 h-24 bg-qz-blue/10 rounded-full flex items-center justify-center mx-auto mb-8">
@@ -62,14 +59,14 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
         </div>
 
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Link href="/" className="px-8 py-4 border-2 border-qz-border dark:border-[#2E3856] rounded-xl font-black text-qz-text dark:text-white hover:bg-qz-bg dark:hover:bg-[#2E3856] transition-all flex items-center justify-center gap-2">
+          <Link href="/" className="px-8 py-4 border-2 border-qz-border dark:border-[#2E3856] rounded-xl font-black text-qz-text dark:text-white hover:bg-qz-bg dark:hover:bg-[#2E3856] transition-all flex items-center justify-center gap-2 active:scale-95">
             トップに戻る
           </Link>
-          <Link href="/dashboard" className="qz-btn-primary px-8 py-4 flex items-center justify-center gap-3">
+          <Link href="/dashboard" className="qz-btn-primary px-8 py-4 flex items-center justify-center gap-3 active:scale-95 transition-all">
             成績を分析する <LayoutDashboard className="w-6 h-6" />
           </Link>
         </div>
-      </motion.div>
+      </div>
 
       <div className="space-y-8">
         <h2 className="text-2xl font-black flex items-center gap-3 border-b border-qz-border dark:border-[#2E3856] pb-4">
@@ -87,7 +84,7 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
               <div key={q.id} className="qz-card group overflow-hidden relative">
                 <button
                   onClick={() => onToggleBookmark(q.id)}
-                  className={`absolute top-12 right-6 p-2 rounded-full transition-all duration-300 z-10 ${
+                  className={`absolute top-12 right-6 p-2 rounded-full transition-all duration-300 z-10 active:scale-90 ${
                     isBookmarked 
                       ? 'bg-qz-yellow text-white shadow-lg' 
                       : 'bg-qz-bg dark:bg-[#2E3856] text-qz-text-light hover:text-qz-yellow hover:bg-qz-yellow/10'

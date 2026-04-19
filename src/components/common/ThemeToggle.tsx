@@ -3,7 +3,6 @@
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-import { motion, AnimatePresence } from "framer-motion"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -20,38 +19,27 @@ export function ThemeToggle() {
     )
   }
 
-  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+  const isDark = theme === "dark" || (theme === "system" && typeof window !== 'undefined' && window.matchMedia("(prefers-color-scheme: dark)").matches)
 
   return (
     <button
       id="theme-toggle-btn"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="relative w-10 h-10 rounded-xl bg-qz-bg dark:bg-[#2E3856] border border-qz-border dark:border-[#2E3856] flex items-center justify-center text-qz-text dark:text-white hover:bg-qz-border dark:hover:bg-[#3B4664] transition-colors overflow-hidden group"
+      className="relative w-10 h-10 rounded-xl bg-qz-bg dark:bg-[#2E3856] border border-qz-border dark:border-[#2E3856] flex items-center justify-center text-qz-text dark:text-white hover:bg-qz-border dark:hover:bg-[#3B4664] transition-colors overflow-hidden group active:scale-90"
       aria-label="Toggle theme"
     >
-      <AnimatePresence mode="wait" initial={false}>
-        {isDark ? (
-          <motion.div
-            key="moon"
-            initial={{ y: 20, opacity: 0, rotate: 45 }}
-            animate={{ y: 0, opacity: 1, rotate: 0 }}
-            exit={{ y: -20, opacity: 0, rotate: -45 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Moon className="w-5 h-5 text-qz-yellow" />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="sun"
-            initial={{ y: 20, opacity: 0, rotate: 45 }}
-            animate={{ y: 0, opacity: 1, rotate: 0 }}
-            exit={{ y: -20, opacity: 0, rotate: -45 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Sun className="w-5 h-5 text-qz-blue" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="relative w-5 h-5">
+        <Sun 
+          className={`absolute inset-0 w-5 h-5 text-qz-blue transition-all duration-300 ${
+            isDark ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'
+          }`} 
+        />
+        <Moon 
+          className={`absolute inset-0 w-5 h-5 text-qz-yellow transition-all duration-300 ${
+            isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-90'
+          }`} 
+        />
+      </div>
       
       {/* Subtle glow on hover */}
       <div className="absolute inset-0 bg-qz-blue/5 dark:bg-qz-yellow/5 opacity-0 group-hover:opacity-100 transition-opacity" />

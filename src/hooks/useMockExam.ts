@@ -7,13 +7,13 @@ interface AnswerRecord {
   selectedOption: string;
 }
 
-interface UseMockExamProps {
-  questions: Question[];
+interface UseMockExamProps<T extends Question> {
+  questions: T[];
   timeLimitSec: number;
   onFinish?: (answers: AnswerRecord[]) => void;
 }
 
-export function useMockExam({ questions, timeLimitSec, onFinish }: UseMockExamProps) {
+export function useMockExam<T extends Question>({ questions, timeLimitSec, onFinish }: UseMockExamProps<T>) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
@@ -77,7 +77,7 @@ export function useMockExam({ questions, timeLimitSec, onFinish }: UseMockExamPr
     answers,
     isFinished,
     timeLeft,
-    currentQuestion: questions[currentIndex],
+    currentQuestion: questions[currentIndex] as T,
     totalQuestions: questions.length,
     progress: (currentIndex / questions.length) * 100,
     nextQuestion,

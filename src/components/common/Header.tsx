@@ -22,7 +22,7 @@ export function Header({ userEmail, streak }: HeaderProps) {
           <span className="text-lg md:text-xl font-black text-qz-text dark:text-white tracking-tight">CloudMaster</span>
         </Link>
 
-        {/* Navigation */}
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8 ml-10 flex-1">
           <Link href="/" className="text-[15px] font-bold text-qz-text dark:text-white hover:text-qz-blue transition-colors flex items-center gap-2">
             <Home className="w-4 h-4" /> ホーム
@@ -35,23 +35,36 @@ export function Header({ userEmail, streak }: HeaderProps) {
         </nav>
 
         {/* User Actions */}
-        <div className="flex items-center gap-1 md:gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
+          {/* Mobile Dashboard Link (Visible only on mobile/small screens when logged in) */}
+          {userEmail && (
+            <Link 
+              href="/dashboard" 
+              className="md:hidden p-2 text-qz-text-light hover:text-qz-blue hover:bg-qz-blue/10 rounded-full transition-all"
+              title="ダッシュボード"
+            >
+              <LayoutDashboard className="w-5 h-5" />
+            </Link>
+          )}
+
           <ThemeToggle />
           
           <div className="h-6 w-px bg-qz-border dark:bg-[#3B4664] mx-0.5 md:mx-1"></div>
 
           {userEmail ? (
             <div className="flex items-center gap-2 md:gap-4">
-              <div className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 bg-orange-500/10 text-orange-500 rounded-full border border-orange-500/20 animate-in fade-in duration-500">
+              <Link href="/dashboard" className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 bg-orange-500/10 text-orange-500 rounded-full border border-orange-500/20 active:scale-95 transition-all">
                 <Flame className="w-3.5 h-3.5 md:w-4 md:h-4 fill-orange-500" />
                 <span className="text-[10px] md:text-xs font-black">{streak || 0}</span>
-              </div>
+              </Link>
+              
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-qz-bg dark:bg-[#2E3856] rounded-full border border-qz-border dark:border-[#2E3856]">
                 <User className="w-4 h-4 text-qz-blue" />
                 <span className="text-xs font-bold truncate max-w-[100px]">{userEmail.split('@')[0]}</span>
               </div>
+              
               <form action={logoutAction}>
-                <button type="submit" className="p-2 text-qz-text-light hover:text-qz-error hover:bg-qz-error/10 rounded-full transition-all" title="ログアウト">
+                <button type="submit" className="p-2 text-qz-text-light hover:text-qz-error hover:bg-qz-error/10 rounded-full transition-all active:scale-90" title="ログアウト">
                   <LogOut className="w-5 h-5" />
                 </button>
               </form>

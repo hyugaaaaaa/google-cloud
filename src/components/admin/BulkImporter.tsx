@@ -31,8 +31,8 @@ export function BulkImporter({ categories }: { categories: Category[] }) {
   const [promptCopied, setPromptCopied] = useState(false)
 
   const categoryNames = categories.map(c => c.name).join('\n- ')
-  const promptTemplate = `以下のJSONフォーマットで、Google Cloud Digital Leader (CDL) 試験対策問題を10問作成してください。
-知識問題とシナリオ問題を混ぜて出題してください（シナリオ問題を4〜5問含めてください）。
+  const promptTemplate = `以下のJSONフォーマットで、Google Cloud Digital Leader (CDL) 試験対策問題を20問作成してください。
+知識問題とシナリオ問題を混ぜて出題してください（シナリオ問題を8〜9問含めてください）。
 
 【問題タイプの説明】
 ■ 知識問題：Google Cloud のサービスや概念を直接問う問題
@@ -142,9 +142,9 @@ export function BulkImporter({ categories }: { categories: Category[] }) {
   // カテゴリ別の問題数を集計
   const categorySummary = parsed
     ? parsed.reduce((acc: Record<string, number>, q) => {
-        acc[q.category] = (acc[q.category] || 0) + 1
-        return acc
-      }, {})
+      acc[q.category] = (acc[q.category] || 0) + 1
+      return acc
+    }, {})
     : null
 
   return (
@@ -183,21 +183,19 @@ export function BulkImporter({ categories }: { categories: Category[] }) {
             <div className="flex border-b border-qz-border dark:border-[#2E3856]">
               <button
                 onClick={() => setTab('prompt')}
-                className={`flex-1 py-4 text-sm font-black transition-all ${
-                  tab === 'prompt'
-                    ? 'text-qz-blue border-b-2 border-qz-blue'
-                    : 'text-qz-text-light hover:text-qz-text'
-                }`}
+                className={`flex-1 py-4 text-sm font-black transition-all ${tab === 'prompt'
+                  ? 'text-qz-blue border-b-2 border-qz-blue'
+                  : 'text-qz-text-light hover:text-qz-text'
+                  }`}
               >
                 STEP 1: AIプロンプト
               </button>
               <button
                 onClick={() => setTab('import')}
-                className={`flex-1 py-4 text-sm font-black transition-all ${
-                  tab === 'import'
-                    ? 'text-qz-blue border-b-2 border-qz-blue'
-                    : 'text-qz-text-light hover:text-qz-text'
-                }`}
+                className={`flex-1 py-4 text-sm font-black transition-all ${tab === 'import'
+                  ? 'text-qz-blue border-b-2 border-qz-blue'
+                  : 'text-qz-text-light hover:text-qz-text'
+                  }`}
               >
                 STEP 2: JSONを貼り付け & 登録
               </button>
@@ -216,11 +214,10 @@ export function BulkImporter({ categories }: { categories: Category[] }) {
                     </pre>
                     <button
                       onClick={handleCopyPrompt}
-                      className={`absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
-                        promptCopied
-                          ? 'bg-qz-success text-white'
-                          : 'bg-white dark:bg-[#2E3856] text-qz-text-light hover:text-qz-blue border border-qz-border dark:border-[#3B4664]'
-                      }`}
+                      className={`absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${promptCopied
+                        ? 'bg-qz-success text-white'
+                        : 'bg-white dark:bg-[#2E3856] text-qz-text-light hover:text-qz-blue border border-qz-border dark:border-[#3B4664]'
+                        }`}
                     >
                       {promptCopied ? <><Check size={14} /> コピー済み</> : <><Copy size={14} /> コピー</>}
                     </button>

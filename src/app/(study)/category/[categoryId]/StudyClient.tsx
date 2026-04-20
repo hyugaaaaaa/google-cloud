@@ -147,6 +147,7 @@ export function StudyClient({
           totalCount={quizQuestions.length} 
           onReset={resetQuiz} 
           isSingleQuestion={questions.length === 1}
+          isGuest={!userEmail}
         />
       </div>
     );

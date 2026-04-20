@@ -9,13 +9,15 @@ interface ResultViewProps {
   totalCount: number;
   onReset: () => void;
   isSingleQuestion?: boolean;
+  isGuest?: boolean;
 }
 
 export const ResultView: React.FC<ResultViewProps> = ({ 
   correctCount, 
   totalCount, 
   onReset, 
-  isSingleQuestion = false 
+  isSingleQuestion = false,
+  isGuest = false
 }) => {
   const accuracy = Math.round((correctCount / totalCount) * 100);
 
@@ -48,8 +50,11 @@ export const ResultView: React.FC<ResultViewProps> = ({
           <button onClick={onReset} className="flex-1 px-6 py-4 border-2 border-qz-border dark:border-[#2E3856] rounded-xl font-black text-qz-text dark:text-white hover:bg-qz-bg dark:hover:bg-[#2E3856] transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
             <RotateCcw className="w-5 h-5" /> もう一度学習
           </button>
-          <Link href="/dashboard" className="flex-1 qz-btn-primary flex items-center justify-center gap-2 shadow-lg shadow-qz-blue/20 active:scale-[0.98] transition-all">
-            {isSingleQuestion ? 'ダッシュボードへ戻る' : '成績を見る'} <ArrowRight className="w-5 h-5" />
+          <Link
+            href={isGuest ? '/' : '/dashboard'}
+            className="flex-1 qz-btn-primary flex items-center justify-center gap-2 shadow-lg shadow-qz-blue/20 active:scale-[0.98] transition-all"
+          >
+            {isGuest ? 'ホームに戻る' : isSingleQuestion ? 'ダッシュボードへ戻る' : '成績を見る'} <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
       </div>

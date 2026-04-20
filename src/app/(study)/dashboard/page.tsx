@@ -25,6 +25,12 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single()
 
+  // ブックマーク数取得
+  const { count: bookmarkCount } = await supabase
+    .from('bookmarks')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+
   // 2. 履歴取得
   const { data: histories, error } = await supabase
     .from('histories')
@@ -172,8 +178,11 @@ export default async function DashboardPage() {
                   <p className="text-xs font-bold text-qz-text-light group-hover:text-qz-yellow transition-colors">保存した問題を復習</p>
                 </div>
               </div>
-              <div className="text-qz-text-light group-hover:text-qz-yellow transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+              <div className="flex items-center gap-4">
+                <span className="text-2xl font-black italic text-qz-yellow">{bookmarkCount || 0}</span>
+                <div className="text-qz-text-light group-hover:text-qz-yellow transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                </div>
               </div>
             </Link>
 
@@ -187,8 +196,11 @@ export default async function DashboardPage() {
                   <p className="text-xs font-bold text-qz-text-light group-hover:text-qz-error transition-colors">間違えた問題を集中的に復習</p>
                 </div>
               </div>
-              <div className="text-qz-text-light group-hover:text-qz-error transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+              <div className="flex items-center gap-4">
+                <span className="text-2xl font-black italic text-qz-error">{uniqueIncorrectCount || 0}</span>
+                <div className="text-qz-text-light group-hover:text-qz-error transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                </div>
               </div>
             </Link>
           </section>

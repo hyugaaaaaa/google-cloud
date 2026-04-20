@@ -42,8 +42,22 @@ export async function updateSession(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')
 
-  // If user is not logged in and not on auth pages or home/public files, redirect to login
-  if (!user && !isAuthPage && !isPublicFile && request.nextUrl.pathname !== '/') {
+  // ゲストユーザーでもアクセスできるパブリックなパス
+  const isPublicStudyPage = 
+    request.nextUrl.pathname.startsWith('/category/') ||
+    request.nextUrl.pathname.startsWith('/mock-exam') ||
+    request.nextUrl.pathname.startsWith('/dashboard/daily') ||
+    request.nextUrl.pathname.startsWith('/admin')
+
+  // ダッシュボードの中でも保護が必要なページ（daily 以外）
+  const isProtectedDashboardPage = 
+    request.nextUrl.pathname === '/dashboard' ||
+    request.nextUrl.pathname.startsWith('/dashboard/mistakes') ||
+    request.nextUrl.pathname.startsWith('/dashboard/bookmarks') ||
+    request.nextUrl.pathname.startsWith('/bookmarks')
+
+  // If user is not logged in and trying to access protected pages, redirect to login
+  if (!user && !isAuthPage && !isPublicFile && !isPublicStudyPage && request.nextUrl.pathname !== '/') {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Header } from '@/components/common/Header'
 import { Achievements } from '@/components/dashboard/Achievements'
 import { CategoryList } from '@/components/dashboard/CategoryList'
+import { CategoryRadarChart } from '@/components/dashboard/CategoryRadarChart'
 import { ActivityChart } from '@/components/dashboard/ActivityChart'
 import { StatsOverview } from '@/components/dashboard/StatsOverview'
 import { RecentSessions } from '@/components/dashboard/RecentSessions'
@@ -228,13 +229,17 @@ export default async function DashboardPage() {
               <RecentSessions sessions={recentSessions} />
             </div>
             <div className="lg:col-span-2 space-y-6">
-              <div className="flex items-center justify-between border-b border-qz-border dark:border-[#2E3856] pb-4">
-                <h2 className="text-2xl font-black italic tracking-tight uppercase">Category Performance</h2>
-                <div className="px-3 py-1 bg-qz-bg dark:bg-[#2E3856] rounded-full border border-qz-border dark:border-[#2E3856]">
-                  <span className="text-[10px] font-black text-qz-text-light uppercase">Sorted by total</span>
+              <CategoryRadarChart categories={categoryResults} />
+              
+              <div className="pt-4 border-t border-qz-border dark:border-[#2E3856]">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-black italic tracking-tight uppercase text-qz-text-light">Select to Study</h2>
+                  <div className="px-2 py-0.5 bg-qz-bg dark:bg-[#2E3856] rounded-full border border-qz-border dark:border-[#2E3856]">
+                    <span className="text-[9px] font-black text-qz-text-light uppercase">Sorted by total</span>
+                  </div>
                 </div>
+                <CategoryList categories={categoryResults} />
               </div>
-              <CategoryList categories={categoryResults} />
             </div>
           </div>
         </div>

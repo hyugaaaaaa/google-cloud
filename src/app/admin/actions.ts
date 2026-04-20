@@ -75,6 +75,18 @@ export async function createQuestionAction(data: {
     return { error: '必須項目が入力されていません' }
   }
 
+  // 重複チェック（問題文が既に存在しないか）
+  const normalizedContent = data.content.trim().toLowerCase()
+  const { data: existing } = await supabase
+    .from('questions')
+    .select('id')
+    .ilike('content', data.content.trim())
+    .limit(1)
+
+  if (existing && existing.length > 0) {
+    return { error: '同じ問題文の問題が既に存在します' }
+  }
+
   const { error } = await supabase
     .from('questions')
     .insert({
@@ -86,6 +98,10 @@ export async function createQuestionAction(data: {
     })
 
   if (error) {
+    // UNIQUE制約違反のハンドリング
+    if (error.code === '23505') {
+      return { error: '同じ問題文の問題が既に存在します' }
+    }
     console.error('Create question error:', error)
     return { error: '問題の作成に失敗しました: ' + error.message }
   }
@@ -129,7 +145,19 @@ export async function bulkCreateQuestionsAction(items: {
 
   const categoryMap = new Map(categories.map(c => [c.name.trim(), c.id]))
 
-  const results = { success: 0, failed: 0, errors: [] as string[] }
+  // 既存の問題文を全件取得して重複チェック用セットを作成
+  const { data: existingQuestions } = await supabase
+    .from('questions')
+    .select('content')
+
+  const existingContents = new Set(
+    (existingQuestions || []).map(q => q.content.trim().toLowerCase())
+  )
+
+  const results = { success: 0, failed: 0, skipped: 0, errors: [] as string[] }
+
+  // バッチ内重複検出用セット
+  const batchContents = new Set<string>()
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
@@ -164,6 +192,24 @@ export async function bulkCreateQuestionsAction(items: {
       continue
     }
 
+    const normalizedContent = item.content.trim().toLowerCase()
+
+    // DBに既に存在する問題との重複チェック
+    if (existingContents.has(normalizedContent)) {
+      results.skipped++
+      results.errors.push(`問題 ${lineNum} をスキップ（重複）: ${item.content.slice(0, 30)}...`)
+      continue
+    }
+
+    // 同バッチ内の重複チェック
+    if (batchContents.has(normalizedContent)) {
+      results.skipped++
+      results.errors.push(`問題 ${lineNum} をスキップ（バッチ内重複）: ${item.content.slice(0, 30)}...`)
+      continue
+    }
+
+    batchContents.add(normalizedContent)
+
     const { error } = await supabase.from('questions').insert({
       category_id: categoryId,
       content: item.content.trim(),
@@ -173,10 +219,16 @@ export async function bulkCreateQuestionsAction(items: {
     })
 
     if (error) {
-      results.failed++
-      results.errors.push(`問題 ${lineNum}: DB挿入エラー - ${error.message}`)
+      if (error.code === '23505') {
+        results.skipped++
+        results.errors.push(`問題 ${lineNum} をスキップ（DB重複）: ${item.content.slice(0, 30)}...`)
+      } else {
+        results.failed++
+        results.errors.push(`問題 ${lineNum}: DB挿入エラー - ${error.message}`)
+      }
     } else {
       results.success++
+      existingContents.add(normalizedContent) // 追加済みとしてマーク
     }
   }
 

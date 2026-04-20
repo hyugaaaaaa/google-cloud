@@ -27,7 +27,7 @@ export function BulkImporter({ categories }: { categories: Category[] }) {
   const [parsed, setParsed] = useState<ParsedQuestion[] | null>(null)
   const [parseError, setParseError] = useState('')
   const [isImporting, setIsImporting] = useState(false)
-  const [result, setResult] = useState<{ success: number; failed: number; errors: string[] } | null>(null)
+  const [result, setResult] = useState<{ success: number; failed: number; skipped: number; errors: string[] } | null>(null)
   const [promptCopied, setPromptCopied] = useState(false)
 
   const categoryNames = categories.map(c => c.name).join('\n- ')
@@ -285,11 +285,17 @@ export function BulkImporter({ categories }: { categories: Category[] }) {
                   ) : (
                     /* 結果表示 */
                     <div className="space-y-5">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className={`grid gap-4 ${result.skipped > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                         <div className="p-6 bg-qz-success/10 border border-qz-success/20 rounded-2xl text-center">
                           <p className="text-4xl font-black text-qz-success">{result.success}</p>
                           <p className="text-xs font-black text-qz-success uppercase tracking-widest mt-1">成功</p>
                         </div>
+                        {result.skipped > 0 && (
+                          <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-center">
+                            <p className="text-4xl font-black text-amber-500">{result.skipped}</p>
+                            <p className="text-xs font-black text-amber-500 uppercase tracking-widest mt-1">重複スキップ</p>
+                          </div>
+                        )}
                         <div className="p-6 bg-qz-error/10 border border-qz-error/20 rounded-2xl text-center">
                           <p className="text-4xl font-black text-qz-error">{result.failed}</p>
                           <p className="text-xs font-black text-qz-error uppercase tracking-widest mt-1">失敗</p>

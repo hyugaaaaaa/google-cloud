@@ -157,25 +157,28 @@ export async function toggleBookmarkAction(questionId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authorized' }
 
-  // 既にブックマークされているか確認
-  const { data: existing, error: selectError } = await supabase
+  // 既にブックマークされているか確認（過去の重複データによるエラーを防ぐため limit(1) を使用）
+  const { data: existingRecords, error: selectError } = await supabase
     .from('bookmarks')
     .select('id')
     .eq('user_id', user.id)
     .eq('question_id', questionId)
-    .maybeSingle()
+    .limit(1)
 
   if (selectError) {
     console.error("Bookmark select error:", selectError);
     return { error: 'Failed to fetch bookmark status' }
   }
 
-  if (existing) {
-    // 削除
+  const isBookmarked = existingRecords && existingRecords.length > 0;
+
+  if (isBookmarked) {
+    // 削除（重複データも一掃するため、idではなくuser_idとquestion_idで削除）
     const { error } = await supabase
       .from('bookmarks')
       .delete()
-      .eq('id', existing.id)
+      .eq('user_id', user.id)
+      .eq('question_id', questionId)
     
     if (error) {
       console.error("Bookmark delete error:", error);

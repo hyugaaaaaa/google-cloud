@@ -98,7 +98,7 @@ export function StudyClient({
     startBookmarkTransition(async () => {
       const result = await toggleBookmarkAction(questionId);
       if (result.error) {
-        toast.error("ブックマークの更新に失敗しました");
+        toast.error(`ブックマークの更新に失敗しました: ${result.error}`);
         setBookmarkedIds(prev => {
           const next = new Set(prev);
           if (isCurrentlyBookmarked) {

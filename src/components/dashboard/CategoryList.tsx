@@ -79,12 +79,9 @@ export function CategoryList({ categories }: CategoryListProps) {
                     <span className="text-[10px] font-bold uppercase tracking-tight">{cat.total} 解答</span>
                   </div>
                   {cat.lastActivity && (
-                    <div 
-                      className="flex items-center gap-1.5 text-qz-text-light"
-                      suppressHydrationWarning
-                    >
+                    <div className="flex items-center gap-1.5 text-qz-text-light">
                       <RotateCcw size={12} />
-                      <span className="text-[10px] font-bold uppercase tracking-tight">
+                      <span className="text-[10px] font-bold uppercase tracking-tight" suppressHydrationWarning>
                         {new Date(cat.lastActivity).toLocaleDateString('ja-JP')}
                       </span>
                     </div>

@@ -160,6 +160,39 @@ export default async function DashboardPage() {
             />
           </section>
 
+          {/* Navigation Links */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Link href="/bookmarks" className="qz-card p-6 flex items-center justify-between group hover:border-qz-yellow transition-all duration-300">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-qz-yellow/10 rounded-xl flex items-center justify-center text-qz-yellow group-hover:bg-qz-yellow group-hover:text-white transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black italic tracking-tight">Bookmarks</h3>
+                  <p className="text-xs font-bold text-qz-text-light group-hover:text-qz-yellow transition-colors">保存した問題を復習</p>
+                </div>
+              </div>
+              <div className="text-qz-text-light group-hover:text-qz-yellow transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+              </div>
+            </Link>
+
+            <Link href="/dashboard/mistakes" className="qz-card p-6 flex items-center justify-between group hover:border-qz-error transition-all duration-300">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-qz-error/10 rounded-xl flex items-center justify-center text-qz-error group-hover:bg-qz-error group-hover:text-white transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black italic tracking-tight">Mistakes Review</h3>
+                  <p className="text-xs font-bold text-qz-text-light group-hover:text-qz-error transition-colors">間違えた問題を集中的に復習</p>
+                </div>
+              </div>
+              <div className="text-qz-text-light group-hover:text-qz-error transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+              </div>
+            </Link>
+          </section>
+
           {/* Middle Section: Chart and Achievements */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">

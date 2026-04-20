@@ -75,46 +75,48 @@ export default async function Home() {
           </section>
         )}
 
-        {/* Daily Challenge Entry Point */}
-        <section className="mb-6 md:mb-12">
-          <div className="qz-card p-4 md:p-10 bg-gradient-to-br from-[#6366F1] to-[#A855F7] border-none flex flex-row md:flex-row items-center justify-between overflow-hidden relative group shadow-xl shadow-indigo-500/20">
-            {/* Background Icon */}
-            <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-12 -translate-y-12 md:translate-x-8 md:-translate-y-8 group-hover:translate-x-4 group-hover:translate-y-4 transition-transform duration-700">
-              <Zap className="w-24 h-24 md:w-64 md:h-64 text-white" />
-            </div>
-
-            <div className="relative z-10 flex items-center gap-3 md:gap-12 w-full">
-              <div className="w-10 h-10 md:w-20 md:h-20 bg-white/20 rounded-lg md:rounded-[32px] flex items-center justify-center flex-shrink-0">
-                {isDailyCompleted ? <CheckCircle2 className="text-white w-5 h-5 md:w-10 md:h-10" /> : <Zap className="text-white w-5 h-5 md:w-10 md:h-10" />}
+        {/* Daily Challenge Entry Point (ログイン済みのみ表示) */}
+        {user && (
+          <section className="mb-6 md:mb-12">
+            <div className="qz-card p-4 md:p-10 bg-gradient-to-br from-[#6366F1] to-[#A855F7] border-none flex flex-row md:flex-row items-center justify-between overflow-hidden relative group shadow-xl shadow-indigo-500/20">
+              {/* Background Icon */}
+              <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-12 -translate-y-12 md:translate-x-8 md:-translate-y-8 group-hover:translate-x-4 group-hover:translate-y-4 transition-transform duration-700">
+                <Zap className="w-24 h-24 md:w-64 md:h-64 text-white" />
               </div>
 
-              <div className="flex-grow text-left space-y-0.5 md:space-y-2">
-                <div className="flex items-center gap-2 md:gap-6">
-                  <h3 className="text-white text-base md:text-4xl font-black italic tracking-tight uppercase leading-none">Daily</h3>
-                  {isDailyCompleted && (
-                    <span className="bg-white/20 text-white text-[8px] md:text-xs font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-white/30 self-center">
-                      Done
-                    </span>
-                  )}
+              <div className="relative z-10 flex items-center gap-3 md:gap-12 w-full">
+                <div className="w-10 h-10 md:w-20 md:h-20 bg-white/20 rounded-lg md:rounded-[32px] flex items-center justify-center flex-shrink-0">
+                  {isDailyCompleted ? <CheckCircle2 className="text-white w-5 h-5 md:w-10 md:h-10" /> : <Zap className="text-white w-5 h-5 md:w-10 md:h-10" />}
                 </div>
-                <p className="text-white/80 text-[10px] md:text-lg font-bold leading-tight max-w-xl">
-                  {isDailyCompleted 
-                    ? "完了！明日また挑戦。" 
-                    : "毎日選ばれる6問に挑戦。"}
-                </p>
-              </div>
 
-              <div className="flex-shrink-0">
-                <Link
-                  href="/dashboard/daily"
-                  className="bg-white text-qz-blue font-black py-2 md:py-6 px-4 md:px-14 rounded-lg md:rounded-[24px] hover:bg-qz-yellow hover:text-qz-text transition-all duration-300 text-xs md:text-xl flex items-center justify-center gap-1 md:gap-4 shadow-xl group-hover:scale-105"
-                >
-                  {isDailyCompleted ? "結果" : "開始"} <ArrowRight className="w-3.5 h-3.5 md:w-8 md:h-8" />
-                </Link>
+                <div className="flex-grow text-left space-y-0.5 md:space-y-2">
+                  <div className="flex items-center gap-2 md:gap-6">
+                    <h3 className="text-white text-base md:text-4xl font-black italic tracking-tight uppercase leading-none">Daily</h3>
+                    {isDailyCompleted && (
+                      <span className="bg-white/20 text-white text-[8px] md:text-xs font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-white/30 self-center">
+                        Done
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-white/80 text-[10px] md:text-lg font-bold leading-tight max-w-xl">
+                    {isDailyCompleted 
+                      ? "完了！明日また挑戦。" 
+                      : "毎日選ばれる6問に挑戦。"}
+                  </p>
+                </div>
+
+                <div className="flex-shrink-0">
+                  <Link
+                    href="/dashboard/daily"
+                    className="bg-white text-qz-blue font-black py-2 md:py-6 px-4 md:px-14 rounded-lg md:rounded-[24px] hover:bg-qz-yellow hover:text-qz-text transition-all duration-300 text-xs md:text-xl flex items-center justify-center gap-1 md:gap-4 shadow-xl group-hover:scale-105"
+                  >
+                    {isDailyCompleted ? "結果" : "開始"} <ArrowRight className="w-3.5 h-3.5 md:w-8 md:h-8" />
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Mock Exam Entry Point */}
         <section className="mb-10 md:mb-20">

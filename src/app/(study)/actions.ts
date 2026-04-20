@@ -158,12 +158,17 @@ export async function toggleBookmarkAction(questionId: string) {
   if (!user) return { error: 'Not authorized' }
 
   // 既にブックマークされているか確認
-  const { data: existing } = await supabase
+  const { data: existing, error: selectError } = await supabase
     .from('bookmarks')
     .select('id')
     .eq('user_id', user.id)
     .eq('question_id', questionId)
-    .single()
+    .maybeSingle()
+
+  if (selectError) {
+    console.error("Bookmark select error:", selectError);
+    return { error: 'Failed to fetch bookmark status' }
+  }
 
   if (existing) {
     // 削除
@@ -172,7 +177,10 @@ export async function toggleBookmarkAction(questionId: string) {
       .delete()
       .eq('id', existing.id)
     
-    if (error) return { error: error.message }
+    if (error) {
+      console.error("Bookmark delete error:", error);
+      return { error: error.message }
+    }
     return { success: true, bookmarked: false }
   } else {
     // 追加
@@ -183,7 +191,14 @@ export async function toggleBookmarkAction(questionId: string) {
         question_id: questionId
       })
     
-    if (error) return { error: error.message }
+    if (error) {
+      // 連続クリックによるユニーク制約違反の場合はエラーとしない
+      if (error.code === '23505') {
+        return { success: true, bookmarked: true }
+      }
+      console.error("Bookmark insert error:", error);
+      return { error: error.message }
+    }
     return { success: true, bookmarked: true }
   }
 }

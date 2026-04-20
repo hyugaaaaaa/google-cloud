@@ -32,6 +32,15 @@ export function BulkImporter({ categories }: { categories: Category[] }) {
 
   const categoryNames = categories.map(c => c.name).join('\n- ')
   const promptTemplate = `以下のJSONフォーマットで、Google Cloud Digital Leader (CDL) 試験対策問題を10問作成してください。
+知識問題とシナリオ問題を混ぜて出題してください（シナリオ問題を4〜5問含めてください）。
+
+【問題タイプの説明】
+■ 知識問題：Google Cloud のサービスや概念を直接問う問題
+  例）「Google Cloud Storage のデフォルトストレージクラスはどれですか？」
+
+■ シナリオ問題：実際のビジネス状況や課題を設定し、最適なソリューションを選ぶ問題
+  例）「ある小売企業が、毎月1TBのトランザクションデータをほぼアクセスしない長期アーカイブとして
+       保存したいと考えています。コストを最小限に抑えるには、どのストレージクラスが最適ですか？」
 
 カテゴリは以下から選んでください：
 - ${categoryNames}
@@ -40,16 +49,18 @@ export function BulkImporter({ categories }: { categories: Category[] }) {
 [
   {
     "category": "カテゴリ名（上記から選択）",
-    "content": "問題文",
+    "content": "問題文（シナリオ問題の場合は状況設定を含む）",
     "options": ["選択肢A", "選択肢B", "選択肢C", "選択肢D"],
     "answer": "正解の選択肢（optionsのいずれかと完全一致）",
-    "explanation": "解説文（なぜその答えが正しいか）"
+    "explanation": "解説文（なぜその答えが正しいか、シナリオの場合は要件との対応も説明）"
   }
 ]
 
 注意事項：
 - 4択問題のみ（options は必ず4つ）
 - answer は options のどれかと完全に一致させること
+- シナリオ問題では「〜という状況において」「〜を実現したい場合」など具体的な文脈を入れること
+- 紛らわしいが明確に間違った選択肢を含めること（難易度を上げる）
 - 実際のCDL試験に即した正確な内容にすること
 - JSONのみを返答してください（前置き・後書き不要）`
 

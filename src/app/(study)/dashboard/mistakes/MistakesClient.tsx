@@ -154,11 +154,29 @@ export function MistakesClient({ mistakes, initialBookmarkedIds = [] }: Mistakes
               <motion.div
                 key={mistake.id}
                 layout
+                className="relative"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
               >
+                {/* Absolute positioned interactive elements to fix a11y warning */}
+                <div className="absolute top-6 right-6 flex items-center gap-2 pointer-events-none z-10">
+                  <button
+                    onClick={(e) => handleToggleBookmark(e, mistake.question_id)}
+                    className={`pointer-events-auto p-2.5 rounded-xl transition-all duration-300 ${
+                      isBookmarked 
+                        ? 'bg-qz-yellow text-white shadow-lg' 
+                        : 'bg-qz-bg dark:bg-[#2E3856] text-qz-text-light hover:text-qz-yellow hover:bg-qz-yellow/10'
+                    }`}
+                  >
+                    <Star size={18} className={isBookmarked ? 'fill-white' : ''} />
+                  </button>
+                  <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-xl bg-qz-bg dark:bg-[#2E3856] flex items-center justify-center transition-transform peer-open:rotate-180">
+                    <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 -rotate-90" />
+                  </div>
+                </div>
+
                 <details className="qz-card group overflow-hidden transition-all duration-300 open:ring-2 open:ring-qz-blue/20">
                   <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
                     <div className="flex-grow pr-4">
@@ -175,18 +193,11 @@ export function MistakesClient({ mistakes, initialBookmarkedIds = [] }: Mistakes
                         {mistake.questions.content}
                       </h3>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => handleToggleBookmark(e, mistake.question_id)}
-                        className={`p-2.5 rounded-xl transition-all duration-300 ${
-                          isBookmarked 
-                            ? 'bg-qz-yellow text-white shadow-lg' 
-                            : 'bg-qz-bg dark:bg-[#2E3856] text-qz-text-light hover:text-qz-yellow hover:bg-qz-yellow/10'
-                        }`}
-                      >
-                        <Star size={18} className={isBookmarked ? 'fill-white' : ''} />
-                      </button>
-                      <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-xl bg-qz-bg dark:bg-[#2E3856] flex items-center justify-center group-open:rotate-180 transition-transform">
+                    <div className="flex items-center gap-2 opacity-0">
+                      <div className="p-2.5">
+                        <Star size={18} />
+                      </div>
+                      <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10">
                         <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 -rotate-90" />
                       </div>
                     </div>

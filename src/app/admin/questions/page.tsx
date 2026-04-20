@@ -3,6 +3,7 @@ import { Header } from '@/components/common/Header'
 import { QuestionEditor } from '@/components/admin/QuestionEditor'
 import { CategoryFilter } from '@/components/admin/CategoryFilter'
 import { QuestionCreator } from '@/components/admin/QuestionCreator'
+import { BulkImporter } from '@/components/admin/BulkImporter'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -101,6 +102,7 @@ export default async function AdminQuestionsPage({
               initialQuery={query} 
               initialCategoryId={categoryId} 
             />
+            <BulkImporter categories={categories || []} />
             <QuestionCreator categories={categories || []} />
           </div>
         </div>

@@ -95,3 +95,96 @@ export async function createQuestionAction(data: {
   return { success: true }
 }
 
+export async function bulkCreateQuestionsAction(items: {
+  category: string;
+  content: string;
+  options: string[];
+  answer: string;
+  explanation: string;
+}[]) {
+  const supabase = await createClient()
+
+  // 認証・管理者チェック
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user?.email !== 'hyuga0510@icloud.com') {
+    return { error: '管理者権限が必要です' }
+  }
+
+  if (!items || items.length === 0) {
+    return { error: '問題が含まれていません' }
+  }
+
+  if (items.length > 50) {
+    return { error: '1回のインポートは50問までです' }
+  }
+
+  // カテゴリ一覧を取得してname→idのマップを作成
+  const { data: categories, error: catError } = await supabase
+    .from('categories')
+    .select('id, name')
+
+  if (catError || !categories) {
+    return { error: 'カテゴリの取得に失敗しました' }
+  }
+
+  const categoryMap = new Map(categories.map(c => [c.name.trim(), c.id]))
+
+  const results = { success: 0, failed: 0, errors: [] as string[] }
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    const lineNum = i + 1
+
+    // バリデーション
+    if (!item.content?.trim()) {
+      results.failed++
+      results.errors.push(`問題 ${lineNum}: 問題文が空です`)
+      continue
+    }
+    if (!Array.isArray(item.options) || item.options.length !== 4) {
+      results.failed++
+      results.errors.push(`問題 ${lineNum}: 選択肢は4つ必要です`)
+      continue
+    }
+    if (item.options.some((o: string) => !o?.trim())) {
+      results.failed++
+      results.errors.push(`問題 ${lineNum}: 空の選択肢があります`)
+      continue
+    }
+    if (!item.options.includes(item.answer)) {
+      results.failed++
+      results.errors.push(`問題 ${lineNum}: answer が options に含まれていません`)
+      continue
+    }
+
+    const categoryId = categoryMap.get(item.category?.trim())
+    if (!categoryId) {
+      results.failed++
+      results.errors.push(`問題 ${lineNum}: カテゴリ「${item.category}」が見つかりません`)
+      continue
+    }
+
+    const { error } = await supabase.from('questions').insert({
+      category_id: categoryId,
+      content: item.content.trim(),
+      options: item.options.map((o: string) => o.trim()),
+      answer: item.answer.trim(),
+      explanation: (item.explanation || '').trim(),
+    })
+
+    if (error) {
+      results.failed++
+      results.errors.push(`問題 ${lineNum}: DB挿入エラー - ${error.message}`)
+    } else {
+      results.success++
+    }
+  }
+
+  if (results.success > 0) {
+    revalidatePath('/admin/questions')
+    revalidatePath('/')
+  }
+
+  return results
+}
+

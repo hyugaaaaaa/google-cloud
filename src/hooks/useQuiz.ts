@@ -3,7 +3,7 @@ import type { Question } from '@/types/app.types';
 
 interface UseQuizProps {
   questions: Question[];
-  onAnswer?: (questionId: string, isCorrect: boolean, option: string) => void;
+  onAnswer?: (questionId: string, isCorrect: boolean, option: string, currentIndex: number, totalQuestions: number) => void;
 }
 
 export function useQuiz({ questions, onAnswer }: UseQuizProps) {
@@ -38,7 +38,7 @@ export function useQuiz({ questions, onAnswer }: UseQuizProps) {
     }
 
     if (onAnswer) {
-      onAnswer(currentQuestion.id, isCorrect, option);
+      onAnswer(currentQuestion.id, isCorrect, option, currentIndex, quizQuestions.length);
     }
   }, [currentIndex, quizQuestions, selectedOption, onAnswer]);
 

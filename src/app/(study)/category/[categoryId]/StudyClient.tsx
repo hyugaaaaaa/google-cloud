@@ -44,11 +44,14 @@ export function StudyClient({
     resetQuiz
   } = useQuiz({
     questions,
-    onAnswer: (questionId, isCorrect, option) => {
+    onAnswer: (questionId, isCorrect, option, currentIndex, totalQuestions) => {
       if (!userEmail) {
-        toast.info("ログインすると学習履歴を保存できます！", {
-          description: "アカウント登録して進捗を記録しましょう。",
-        });
+        if (currentIndex === 0 || currentIndex === totalQuestions - 1) {
+          toast.info("ログインすると学習履歴を保存できます！", {
+            description: "アカウント登録して進捗を記録しましょう。",
+            id: "guest-toast"
+          });
+        }
         return;
       }
 

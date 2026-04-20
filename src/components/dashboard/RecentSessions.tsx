@@ -52,7 +52,7 @@ export function RecentSessions({ sessions }: RecentSessionsProps) {
                       {session.mode}
                     </span>
                   </div>
-                  <p className="text-[10px] font-bold text-qz-text-light opacity-60">
+                  <p suppressHydrationWarning className="text-[10px] font-bold text-qz-text-light opacity-60">
                     {new Date(session.createdAt).toLocaleString('ja-JP', { 
                       month: 'short', 
                       day: 'numeric', 

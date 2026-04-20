@@ -55,7 +55,7 @@ export function Achievements({ streak, totalAnswers, hasPerfectScore, hasComplet
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {badges.map(badge => (
-          <div key={badge.id} className={`qz-card p-6 flex flex-col items-center text-center transition-all duration-500 ${badge.unlocked ? 'border-qz-border opacity-100 scale-100' : 'opacity-30 grayscale blur-[1px]'}`}>
+          <div key={badge.id} className={`group relative qz-card p-6 flex flex-col items-center text-center transition-all duration-500 ${badge.unlocked ? 'border-qz-border opacity-100 scale-100' : 'opacity-30 grayscale blur-[1px]'}`}>
             <div className={`w-16 h-16 rounded-2xl ${badge.bg} flex items-center justify-center mb-4 shadow-inner`}>
               {badge.id === 'streak_7' && <Zap className={`w-8 h-8 ${badge.color}`} />}
               {badge.id === 'century' && <Target className={`w-8 h-8 ${badge.color}`} />}
@@ -63,9 +63,17 @@ export function Achievements({ streak, totalAnswers, hasPerfectScore, hasComplet
               {badge.id === 'mock_master' && <Trophy className={`w-8 h-8 ${badge.color}`} />}
             </div>
             <h4 className="font-black text-xs uppercase tracking-tighter mb-1">{badge.name}</h4>
-            <p className="text-[10px] font-bold text-qz-text-light">{badge.desc}</p>
+            
+            {/* モバイル用表示（PCでは非表示） */}
+            <p className="text-[10px] font-bold text-qz-text-light md:hidden">{badge.desc}</p>
+
+            {/* PC用ホバーツールチップ */}
+            <div className="hidden md:block absolute -top-8 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-qz-text dark:bg-white text-white dark:text-qz-text text-xs font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-hover:-translate-y-1 transition-all z-20 pointer-events-none shadow-xl">
+              {badge.desc}
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-qz-text dark:bg-white rotate-45"></div>
+            </div>
             {badge.unlocked && (
-              <div className="mt-3 px-2 py-0.5 bg-qz-success text-white text-[8px] font-black rounded-full animate-bounce">
+              <div className="mt-3 md:mt-2 px-2 py-0.5 bg-qz-success text-white text-[8px] font-black rounded-full animate-bounce">
                 UNLOCKED
               </div>
             )}

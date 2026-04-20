@@ -89,8 +89,8 @@ export function CategoryRadarChart({ categories }: CategoryRadarChartProps) {
                 strokeWidth={2.5}
                 fill="var(--qz-blue)"
                 fillOpacity={0.18}
-                activeDot={{ r: 5, fill: 'var(--qz-blue)', stroke: 'white', strokeWidth: 2 }}
-                dot={{ r: 4, fill: 'var(--qz-blue)', strokeWidth: 0 }}
+                dot={{ r: 3, fill: 'var(--qz-blue)', strokeWidth: 0 }}
+                activeDot={false}
               />
             </RadarChart>
           </ResponsiveContainer>

@@ -118,6 +118,8 @@ export default async function DashboardPage() {
     uniqueWrongCount: Array.from(stat.latestResults.values()).filter((v: any) => !v).length
   })).sort((a, b) => b.total - a.total)
 
+  const uniqueIncorrectCount = categoryResults.reduce((sum, cat) => sum + cat.uniqueWrongCount, 0)
+
   // 直近のセッション（最後の10件を逆順で）
   const recentSessions = [...typedHistories].reverse().slice(0, 8).map(h => ({
     id: h.id,

@@ -47,17 +47,30 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         }).catch(() => {
-          // ネットワークエラー時は単にエラーを返さず、
-          // 呼び出し側の.catch()に委ねる（Uncaughtエラーを防ぐ）
-          return null;
+          // ネットワークエラー時はキャッシュにフォールバック、
+          // キャッシュもなければ503エラーレスポンスを返す（nullはNG）
+          return cachedResponse || caches.match('/').then((fallback) => {
+            return fallback || new Response('Network error', {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: { 'Content-Type': 'text/plain' }
+            });
+          });
         });
 
         // キャッシュがあればそれを返しつつ裏で更新、なければネットワークを待つ
         return cachedResponse || fetchPromise;
       }).catch(() => {
-        // オフラインかつキャッシュがない場合のフォールバック（必要なら）
-        return caches.match('/');
+        // オフラインかつキャッシュがない場合のフォールバック
+        return caches.match('/').then((fallback) => {
+          return fallback || new Response('Offline', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain' }
+          });
+        });
       });
     })
   );
 });
+

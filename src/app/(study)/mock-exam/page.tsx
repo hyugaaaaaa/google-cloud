@@ -5,12 +5,7 @@ import { MockExamClient } from './MockExamClient'
 
 export default async function MockExamPage() {
   const supabase = await createClient()
-
-  // セッション確認
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect('/login')
-  }
 
   // MVPのため全問題を取得し、サーバー側でシャッフルして20問抽出する
   // ※問題数が増えた場合は、PostgreSQL側に random() ソートのRPC関数を作成推奨
@@ -45,25 +40,32 @@ export default async function MockExamPage() {
     created_at: q.created_at
   }))
 
-  // ブックマーク情報の取得
-  const { data: bookmarkData } = await supabase
-    .from('bookmarks')
-    .select('question_id')
-    .eq('user_id', user.id)
-  
-  const initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
+  let initialBookmarkedIds: string[] = []
+  let streak = 0
 
-  // プロフィールを取得（streak用）
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('streak_count')
-    .eq('id', user.id)
-    .single()
+  if (user) {
+    // ブックマーク情報の取得
+    const { data: bookmarkData } = await supabase
+      .from('bookmarks')
+      .select('question_id')
+      .eq('user_id', user.id)
+    
+    initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
+
+    // プロフィールを取得（streak用）
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('streak_count')
+      .eq('id', user.id)
+      .single()
+    
+    streak = profile?.streak_count || 0
+  }
 
   return <MockExamClient 
     questions={processedQuestions} 
-    userEmail={user.email || ''} 
-    streak={profile?.streak_count || 0}
+    userEmail={user?.email || ''} 
+    streak={streak}
     initialBookmarkedIds={initialBookmarkedIds} 
   />
 }

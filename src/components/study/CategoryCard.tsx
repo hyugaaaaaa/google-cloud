@@ -11,7 +11,7 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ id, name, questionCount, isAuthenticated }: CategoryCardProps) {
-  const href = isAuthenticated ? `/category/${encrypt(id)}` : "/login"
+  const href = `/category/${encrypt(id)}`
 
   return (
     <Link href={href} className="group block h-full">

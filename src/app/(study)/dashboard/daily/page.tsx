@@ -4,9 +4,7 @@ import { DailyChallengeClient } from './DailyChallengeClient'
 
 export default async function DailyChallengePage() {
   const supabase = await createClient()
-
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   // Get all categories
   const { data: categories } = await supabase.from('categories').select('id, name').order('id')
@@ -48,40 +46,47 @@ export default async function DailyChallengePage() {
     }
   }).filter(q => q !== null)
 
-  // Check if already completed today
-  const startOfDay = new Date(now)
-  startOfDay.setHours(0, 0, 0, 0)
-  // Convert to UTC for Supabase query if needed, or just use the date string
-  
-  const { data: existingHistories } = await supabase
-    .from('histories')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('study_mode', 'daily')
-    .gte('created_at', startOfDay.toISOString())
+  let isCompleted = false
+  let initialBookmarkedIds: string[] = []
+  let streak = 0
 
-  const isCompleted = !!(existingHistories && existingHistories.length >= 6)
+  if (user) {
+    // Check if already completed today
+    const startOfDay = new Date(now)
+    startOfDay.setHours(0, 0, 0, 0)
+    
+    const { data: existingHistories } = await supabase
+      .from('histories')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('study_mode', 'daily')
+      .gte('created_at', startOfDay.toISOString())
 
-  const { data: bookmarkData } = await supabase
-    .from('bookmarks')
-    .select('question_id')
-    .eq('user_id', user.id)
-  
-  const initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
+    isCompleted = !!(existingHistories && existingHistories.length >= 6)
 
-  // プロフィールを取得（streak用）
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('streak_count')
-    .eq('id', user.id)
-    .single()
+    const { data: bookmarkData } = await supabase
+      .from('bookmarks')
+      .select('question_id')
+      .eq('user_id', user.id)
+    
+    initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
+
+    // プロフィールを取得（streak用）
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('streak_count')
+      .eq('id', user.id)
+      .single()
+    
+    streak = profile?.streak_count || 0
+  }
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg text-qz-text dark:text-qz-text">
       <DailyChallengeClient 
         questions={dailyQuestions} 
-        userEmail={user.email || ''} 
-        streak={profile?.streak_count || 0}
+        userEmail={user?.email || ''} 
+        streak={streak}
         isCompleted={isCompleted}
         dateString={jstDate}
         initialBookmarkedIds={initialBookmarkedIds}

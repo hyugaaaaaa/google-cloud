@@ -45,6 +45,13 @@ export function StudyClient({
   } = useQuiz({
     questions,
     onAnswer: (questionId, isCorrect, option) => {
+      if (!userEmail) {
+        toast.info("ログインすると学習履歴を保存できます！", {
+          description: "アカウント登録して進捗を記録しましょう。",
+        });
+        return;
+      }
+
       startTransition(async () => {
         try {
           await saveHistoryAction(questionId, isCorrect, option);
@@ -65,6 +72,11 @@ export function StudyClient({
   }, [questions.length, isStarted, isFinished, startQuiz]);
 
   const handleToggleBookmark = () => {
+    if (!userEmail) {
+      toast.error("ブックマーク機能を利用するにはログインが必要です");
+      return;
+    }
+
     if (!currentQuestion) return;
     
     const questionId = currentQuestion.id;

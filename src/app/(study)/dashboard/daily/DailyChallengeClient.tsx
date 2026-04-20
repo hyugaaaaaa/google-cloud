@@ -20,7 +20,7 @@ export function DailyChallengeClient({
   initialBookmarkedIds = []
 }: { 
   questions: any[], 
-  userEmail: string, 
+  userEmail?: string, 
   streak?: number,
   isCompleted: boolean,
   dateString: string,
@@ -45,6 +45,13 @@ export function DailyChallengeClient({
     questions,
     initialCompleted,
     onFinish: async (finalAnswers) => {
+      if (!userEmail) {
+        toast.info("デイリーチャレンジ完了！ログインするとストリークを維持できます。", {
+          description: "アカウント登録して毎日学習を続けましょう。",
+        });
+        return;
+      }
+
       try {
         await saveBulkHistoryAction(finalAnswers, 'daily');
         toast.success("チャレンジを記録しました！");
@@ -56,6 +63,11 @@ export function DailyChallengeClient({
   });
 
   const handleToggleBookmark = () => {
+    if (!userEmail) {
+      toast.error("ブックマーク機能を利用するにはログインが必要です");
+      return;
+    }
+
     if (!currentQuestion) return;
     
     const questionId = currentQuestion.id;

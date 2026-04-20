@@ -38,6 +38,13 @@ export function MockExamClient({ questions, userEmail, streak, initialBookmarked
     questions,
     timeLimitSec: EXAM_TIME_LIMIT_SEC,
     onFinish: async (finalAnswers) => {
+      if (!userEmail) {
+        toast.info("模擬試験完了！ログインすると結果を保存できます。", {
+          description: "アカウント登録して成長を記録しましょう。",
+        });
+        return;
+      }
+
       setIsSaving(true)
       const records = finalAnswers.map(a => ({
         questionId: a.questionId,
@@ -55,6 +62,11 @@ export function MockExamClient({ questions, userEmail, streak, initialBookmarked
   })
 
   const handleToggleBookmark = (questionId: string) => {
+    if (!userEmail) {
+      toast.error("ブックマーク機能を利用するにはログインが必要です");
+      return;
+    }
+
     const isCurrentlyBookmarked = bookmarkedIds.has(questionId);
 
     // Optimistic update

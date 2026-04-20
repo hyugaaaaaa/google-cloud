@@ -106,7 +106,7 @@ export default async function Home() {
 
               <div className="flex-shrink-0">
                 <Link
-                  href={user ? "/dashboard/daily" : "/login"}
+                  href="/dashboard/daily"
                   className="bg-white text-qz-blue font-black py-2 md:py-6 px-4 md:px-14 rounded-lg md:rounded-[24px] hover:bg-qz-yellow hover:text-qz-text transition-all duration-300 text-xs md:text-xl flex items-center justify-center gap-1 md:gap-4 shadow-xl group-hover:scale-105"
                 >
                   {isDailyCompleted ? "結果" : "開始"} <ArrowRight className="w-3.5 h-3.5 md:w-8 md:h-8" />
@@ -138,7 +138,7 @@ export default async function Home() {
 
               <div className="flex-shrink-0">
                 <Link
-                  href={user ? "/mock-exam" : "/login"}
+                  href="/mock-exam"
                   className="bg-white text-qz-blue font-black py-2 md:py-6 px-4 md:px-14 rounded-lg md:rounded-[24px] hover:bg-qz-yellow hover:text-qz-text transition-all duration-300 text-xs md:text-xl flex items-center justify-center gap-1 md:gap-4 shadow-xl group-hover:scale-105"
                 >
                   開始 <ChevronRight className="w-3.5 h-3.5 md:w-8 md:h-8" />

@@ -17,11 +17,7 @@ export default async function CategoryStudyPage({
   }
 
   const supabase = await createClient()
-
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect('/login')
-  }
 
   const { data: questions, error } = await supabase
     .from('questions')
@@ -44,23 +40,30 @@ export default async function CategoryStudyPage({
     created_at: q.created_at
   }))
 
-  const { data: bookmarkData } = await supabase
-    .from('bookmarks')
-    .select('question_id')
-    .eq('user_id', user.id)
-  
-  const initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
+  let initialBookmarkedIds: string[] = []
+  let streak = 0
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('streak_count')
-    .eq('id', user.id)
-    .single()
+  if (user) {
+    const { data: bookmarkData } = await supabase
+      .from('bookmarks')
+      .select('question_id')
+      .eq('user_id', user.id)
+    
+    initialBookmarkedIds = (bookmarkData || []).map(b => b.question_id)
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('streak_count')
+      .eq('id', user.id)
+      .single()
+    
+    streak = profile?.streak_count || 0
+  }
 
   return <StudyClient 
     questions={processedQuestions} 
-    userEmail={user.email || ''} 
-    streak={profile?.streak_count || 0}
+    userEmail={user?.email || ''} 
+    streak={streak}
     initialBookmarkedIds={initialBookmarkedIds} 
   />
 }

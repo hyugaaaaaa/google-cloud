@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/common/Header'
 import { QuestionEditor } from '@/components/admin/QuestionEditor'
 import { CategoryFilter } from '@/components/admin/CategoryFilter'
-import { Plus } from 'lucide-react'
+import { QuestionCreator } from '@/components/admin/QuestionCreator'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -101,10 +101,7 @@ export default async function AdminQuestionsPage({
               initialQuery={query} 
               initialCategoryId={categoryId} 
             />
-            {/* Add functionality later */}
-            <button className="qz-btn-primary h-14 px-6 flex items-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed">
-              <Plus size={24} /> 新規作成
-            </button>
+            <QuestionCreator categories={categories || []} />
           </div>
         </div>
 

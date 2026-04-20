@@ -55,3 +55,43 @@ export async function deleteQuestionAction(id: string) {
   revalidatePath('/admin/questions')
   return { success: true }
 }
+
+export async function createQuestionAction(data: {
+  category_id: string;
+  content: string;
+  options: string[];
+  answer: string;
+  explanation: string;
+}) {
+  const supabase = await createClient()
+
+  // 認証・管理者チェック
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user?.email !== 'hyuga0510@icloud.com') {
+    return { error: '管理者権限が必要です' }
+  }
+
+  if (!data.category_id || !data.content.trim() || data.options.some(o => !o.trim()) || !data.answer) {
+    return { error: '必須項目が入力されていません' }
+  }
+
+  const { error } = await supabase
+    .from('questions')
+    .insert({
+      category_id: data.category_id,
+      content: data.content.trim(),
+      options: data.options,
+      answer: data.answer,
+      explanation: data.explanation.trim(),
+    })
+
+  if (error) {
+    console.error('Create question error:', error)
+    return { error: '問題の作成に失敗しました: ' + error.message }
+  }
+
+  revalidatePath('/admin/questions')
+  revalidatePath('/')
+  return { success: true }
+}
+

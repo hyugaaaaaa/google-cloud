@@ -63,7 +63,7 @@ export function CategoryRadarChart({ categories }: CategoryRadarChartProps) {
       {/* Chart */}
       <div className="w-full h-[280px] md:h-[360px] relative z-10">
         {chartData.length > 2 ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <RadarChart cx="50%" cy="50%" outerRadius="72%" data={chartData}>
               <PolarGrid
                 gridType="circle"

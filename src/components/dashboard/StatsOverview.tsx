@@ -4,13 +4,13 @@ import React from 'react'
 import { Zap, Star, TrendingUp } from 'lucide-react'
 
 type StatsOverviewProps = {
-  totalSolved: number
+
   overallAccuracy: number
   streak: number
   solvedToday: number
 }
 
-export function StatsOverview({ totalSolved, overallAccuracy, streak, solvedToday }: StatsOverviewProps) {
+export function StatsOverview({ overallAccuracy, streak, solvedToday }: StatsOverviewProps) {
   const stats = [
     { 
       label: 'Solved Today', 

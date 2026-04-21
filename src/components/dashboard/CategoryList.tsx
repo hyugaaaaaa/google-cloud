@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { RotateCcw, ChevronRight, CheckCircle2, Target } from 'lucide-react'
+import { ChevronRight, Target } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 

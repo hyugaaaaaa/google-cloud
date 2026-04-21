@@ -100,7 +100,7 @@ export function BulkImporter({ categories }: { categories: Category[] }) {
 
       setParsed(data)
       setTab('import')
-    } catch (e) {
+    } catch {
       setParseError('JSONのパースに失敗しました。フォーマットを確認してください。')
     }
   }

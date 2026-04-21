@@ -57,7 +57,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         <div className="px-6 pb-10 space-y-3">
           {question.options.map((option, idx) => {
             const isSelected = selectedOption === option;
-            const isCorrectAnswer = isAnswered && option === String(question.answer);
+
             const isWrongSelection = isAnswered && isSelected && option !== String(question.answer);
 
             let btnBaseClass = "relative w-full text-left px-6 py-4 rounded-xl border-2 font-bold transition-all flex items-center justify-between group active:scale-[0.99] ";

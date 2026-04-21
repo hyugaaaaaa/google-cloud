@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -49,12 +49,6 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/dashboard/daily') ||
     request.nextUrl.pathname.startsWith('/admin')
 
-  // ダッシュボードの中でも保護が必要なページ（daily 以外）
-  const isProtectedDashboardPage = 
-    request.nextUrl.pathname === '/dashboard' ||
-    request.nextUrl.pathname.startsWith('/dashboard/mistakes') ||
-    request.nextUrl.pathname.startsWith('/dashboard/bookmarks') ||
-    request.nextUrl.pathname.startsWith('/bookmarks')
 
   // If user is not logged in and trying to access protected pages, redirect to login
   if (!user && !isAuthPage && !isPublicFile && !isPublicStudyPage && request.nextUrl.pathname !== '/') {

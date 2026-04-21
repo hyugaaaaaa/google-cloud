@@ -21,7 +21,7 @@ type CategoryRadarChartProps = {
   categories: CategoryResult[]
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: { subject: string }; value: number }[] }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-[#1A1D23] border border-qz-border dark:border-[#2E3856] p-3 rounded-xl shadow-lg backdrop-blur-md">

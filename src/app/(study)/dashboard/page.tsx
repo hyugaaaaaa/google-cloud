@@ -162,7 +162,6 @@ export default async function DashboardPage() {
           {/* Top Section: Overview */}
           <section className="space-y-6">
             <StatsOverview 
-              totalSolved={totalAnswers}
               overallAccuracy={overallAccuracy}
               streak={streak}
               solvedToday={solvedToday}

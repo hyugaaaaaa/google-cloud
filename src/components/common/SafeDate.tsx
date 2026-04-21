@@ -6,6 +6,7 @@ export function SafeDate({ date, format = 'ja-JP' }: { date: string | Date, form
   const [formatted, setFormatted] = useState<string>('')
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormatted(new Date(date).toLocaleDateString(format))
   }, [date, format])
 

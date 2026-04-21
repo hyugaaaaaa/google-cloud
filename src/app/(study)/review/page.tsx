@@ -30,8 +30,8 @@ export default async function ReviewPage() {
 
   // 最新が不正解（false）のIDだけを取り出す
   const wrongQuestionIds = Array.from(latestResults.entries())
-    .filter(([_, isCorrect]) => !isCorrect)
-    .map(([id, _]) => id)
+    .filter(([, isCorrect]) => !isCorrect)
+    .map(([id]) => id)
 
   // プロフィールを取得（streak用）
   const { data: profile } = await supabase

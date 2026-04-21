@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/common/Header'
-import { BookMarked, ArrowRight, Zap, Trophy, ShieldCheck, LayoutDashboard, ChevronRight, Target, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, Zap, Trophy, ShieldCheck, LayoutDashboard, ChevronRight, Target, CheckCircle2 } from 'lucide-react'
 import { CategoryCard } from '@/components/study/CategoryCard'
 import { updateStreakAction } from '@/app/(study)/actions'
 
@@ -21,7 +21,7 @@ export default async function Home() {
   }
 
   // Fetch categories with question counts
-  const { data: categories, error } = await supabase
+  const { data: categories } = await supabase
     .from('categories')
     .select('*, questions(count)')
     .order('created_at', { ascending: true })
@@ -164,13 +164,13 @@ export default async function Home() {
 
           {categories && categories.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
-              {categories.map((cat: any) => (
+              {categories.map((cat: { id: string; name: string; questions: { count: number }[] }) => (
                 <CategoryCard
                   key={cat.id}
                   id={cat.id}
                   name={cat.name}
                   questionCount={cat.questions?.[0]?.count || 0}
-                  isAuthenticated={!!user}
+
                 />
               ))}
             </div>

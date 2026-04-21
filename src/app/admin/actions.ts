@@ -76,7 +76,7 @@ export async function createQuestionAction(data: {
   }
 
   // 重複チェック（問題文が既に存在しないか）
-  const normalizedContent = data.content.trim().toLowerCase()
+
   const { data: existing } = await supabase
     .from('questions')
     .select('id')

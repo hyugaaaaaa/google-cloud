@@ -20,6 +20,13 @@ export function useMockExam<T extends Question>({ questions, timeLimitSec, onFin
   const [isFinished, setIsFinished] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeLimitSec);
 
+  const finishExam = useCallback((finalAnswers: AnswerRecord[]) => {
+    setIsFinished(true);
+    if (onFinish) {
+      onFinish(finalAnswers);
+    }
+  }, [onFinish]);
+
   // Timer
   useEffect(() => {
     if (isFinished) return;
@@ -36,14 +43,7 @@ export function useMockExam<T extends Question>({ questions, timeLimitSec, onFin
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isFinished, answers]);
-
-  const finishExam = useCallback((finalAnswers: AnswerRecord[]) => {
-    setIsFinished(true);
-    if (onFinish) {
-      onFinish(finalAnswers);
-    }
-  }, [onFinish]);
+  }, [isFinished, answers, finishExam]);
 
   const nextQuestion = useCallback(() => {
     if (!selectedOption || !questions[currentIndex]) return;

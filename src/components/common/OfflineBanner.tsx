@@ -11,6 +11,7 @@ export function OfflineBanner() {
     const handleOnline = () => setIsOffline(false)
     const handleOffline = () => setIsOffline(true)
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsOffline(!navigator.onLine)
 
     window.addEventListener('online', handleOnline)

@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { updateQuestionAction, deleteQuestionAction } from '@/app/admin/actions'
 import { toast } from 'sonner'
-import { Save, Trash2, X, Check, Edit2 } from 'lucide-react'
+import { Save, Trash2, Check, Edit2 } from 'lucide-react'
 
 type Question = {
   id: string

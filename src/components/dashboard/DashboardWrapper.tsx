@@ -14,7 +14,16 @@ type DashboardData = {
   totalCorrect: number
   overallAccuracy: number
   uniqueIncorrectCount: number
-  categoryResults: any[]
+  categoryResults: {
+    id: string
+    encryptedId: string
+    name: string
+    total: number
+    correct: number
+    accuracy: number
+    lastActivity: string | null
+    uniqueWrongCount: number
+  }[]
   hasCompletedMock: boolean
 }
 

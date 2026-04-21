@@ -7,10 +7,10 @@ interface CategoryCardProps {
   id: string
   name: string
   questionCount: number
-  isAuthenticated: boolean
+
 }
 
-export function CategoryCard({ id, name, questionCount, isAuthenticated }: CategoryCardProps) {
+export function CategoryCard({ id, name, questionCount }: CategoryCardProps) {
   const href = `/category/${encrypt(id)}`
 
   return (

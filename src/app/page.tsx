@@ -1,4 +1,10 @@
+import { Metadata } from 'next'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: 'ホーム',
+  description: 'Google Cloud CDL 資格対策のトップページ。最新の試験傾向に基づいた問題セットで学習を始めましょう。',
+}
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/common/Header'
 import { ArrowRight, Zap, Trophy, ShieldCheck, LayoutDashboard, ChevronRight, Target, CheckCircle2 } from 'lucide-react'

@@ -8,6 +8,13 @@ import { resolvePlanTier } from '@/lib/feature-gates'
 export const metadata: Metadata = {
   title: 'Onboarding',
   description: '学習目標とペースを設定し、CloudMasterのパーソナライズ機能を有効化します。',
+  robots: {
+    index: false,
+    follow: false,
+  },
+  alternates: {
+    canonical: '/onboarding',
+  },
 }
 
 export default async function OnboardingPage() {

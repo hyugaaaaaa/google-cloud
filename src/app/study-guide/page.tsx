@@ -3,6 +3,12 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'CDL Study Guide',
   description: 'CloudMaster の Google Cloud CDL 学習ガイド。4週間の推奨学習プランを紹介します。',
+  alternates: {
+    canonical: '/study-guide',
+    languages: {
+      'ja-JP': '/study-guide',
+    },
+  },
 }
 
 const faqLd = {

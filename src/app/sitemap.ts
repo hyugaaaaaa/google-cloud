@@ -1,50 +1,64 @@
 import { MetadataRoute } from 'next'
+import { SEO_LAST_MODIFIED, getSiteUrl } from '@/lib/seo'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  const siteUrl = getSiteUrl()
 
   return [
     {
       url: `${siteUrl}`,
-      lastModified: new Date(),
+      lastModified: SEO_LAST_MODIFIED,
       changeFrequency: 'daily',
       priority: 1,
-    },
-    {
-      url: `${siteUrl}/login`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${siteUrl}/register`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.8,
+      alternates: {
+        languages: {
+          'ja-JP': `${siteUrl}`,
+        },
+      },
     },
     {
       url: `${siteUrl}/what-is-google-cloud-cdl`,
-      lastModified: new Date(),
+      lastModified: SEO_LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
+      alternates: {
+        languages: {
+          'ja-JP': `${siteUrl}/what-is-google-cloud-cdl`,
+        },
+      },
     },
     {
       url: `${siteUrl}/study-guide`,
-      lastModified: new Date(),
+      lastModified: SEO_LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
+      alternates: {
+        languages: {
+          'ja-JP': `${siteUrl}/study-guide`,
+        },
+      },
     },
     {
       url: `${siteUrl}/exam-tips`,
-      lastModified: new Date(),
+      lastModified: SEO_LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
+      alternates: {
+        languages: {
+          'ja-JP': `${siteUrl}/exam-tips`,
+        },
+      },
     },
     {
       url: `${siteUrl}/category-explanations`,
-      lastModified: new Date(),
+      lastModified: SEO_LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
+      alternates: {
+        languages: {
+          'ja-JP': `${siteUrl}/category-explanations`,
+        },
+      },
     },
   ]
 }

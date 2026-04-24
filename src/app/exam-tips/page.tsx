@@ -3,11 +3,29 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'CDL Exam Tips',
   description: 'Google Cloud Digital Leader 試験で失点しやすいポイントと直前対策のコツ。',
+  alternates: {
+    canonical: '/exam-tips',
+    languages: {
+      'ja-JP': '/exam-tips',
+    },
+  },
+}
+
+const articleLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Google Cloud CDL Exam Tips',
+  description: 'Google Cloud Digital Leader 試験で失点しやすいポイントと直前対策のコツ。',
+  author: {
+    '@type': 'Organization',
+    name: 'CloudMaster Team',
+  },
 }
 
 export default function ExamTipsPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-12 md:py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }} />
       <article className="prose prose-slate max-w-none">
         <h1>Google Cloud CDL Exam Tips</h1>
 

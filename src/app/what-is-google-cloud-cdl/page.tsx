@@ -4,6 +4,12 @@ export const metadata: Metadata = {
   title: 'What Is Google Cloud CDL',
   description:
     'Google Cloud Digital Leader (CDL) 試験の概要、対象者、出題領域、学習の進め方をわかりやすく解説します。',
+  alternates: {
+    canonical: '/what-is-google-cloud-cdl',
+    languages: {
+      'ja-JP': '/what-is-google-cloud-cdl',
+    },
+  },
 }
 
 const articleLd = {

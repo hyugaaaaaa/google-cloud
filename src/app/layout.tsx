@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/common/ThemeProvider";
 import { Toaster } from "sonner";
 import { PWARegistration } from "@/components/common/PWARegistration";
 import { OfflineBanner } from "@/components/common/OfflineBanner";
+import { getSiteUrl } from "@/lib/seo";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -12,7 +13,7 @@ const inter = Inter({
   preload: false,
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -39,6 +40,12 @@ export const metadata: Metadata = {
         alt: "CloudMaster - Google Cloud CDL 資格対策",
       },
     ],
+  },
+  alternates: {
+    canonical: "/",
+    languages: {
+      "ja-JP": "/",
+    },
   },
   twitter: {
     card: "summary_large_image",

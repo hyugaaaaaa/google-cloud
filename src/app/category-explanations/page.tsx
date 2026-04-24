@@ -3,6 +3,12 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'CDL Category Explanations',
   description: 'Google Cloud CDL の主要カテゴリ別に、学習観点と得点のコツを解説します。',
+  alternates: {
+    canonical: '/category-explanations',
+    languages: {
+      'ja-JP': '/category-explanations',
+    },
+  },
 }
 
 const categories = [
@@ -32,9 +38,21 @@ const categories = [
   },
 ]
 
+const itemListLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Google Cloud CDL Category Explanations',
+  itemListElement: categories.map((category, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: category.title,
+  })),
+}
+
 export default function CategoryExplanationsPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 md:py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
       <section className="mb-8">
         <h1 className="text-4xl font-black tracking-tight">CDL Category Explanations</h1>
         <p className="mt-3 text-sm font-bold text-qz-text-light">

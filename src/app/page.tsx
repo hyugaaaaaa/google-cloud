@@ -4,6 +4,12 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'ホーム',
   description: 'Google Cloud CDL 資格対策のトップページ。最新の試験傾向に基づいた問題セットで学習を始めましょう。',
+  alternates: {
+    canonical: '/',
+    languages: {
+      'ja-JP': '/',
+    },
+  },
 }
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/common/Header'
@@ -11,6 +17,7 @@ import { ArrowRight, Zap, Trophy, ShieldCheck, LayoutDashboard, ChevronRight, Ta
 import { CategoryCard } from '@/components/study/CategoryCard'
 import { updateStreakAction } from '@/app/(study)/actions'
 import { resolvePlanTier } from '@/lib/feature-gates'
+import { toAbsoluteUrl } from '@/lib/seo'
 
 export default async function Home() {
   const supabase = await createClient()
@@ -65,6 +72,21 @@ export default async function Home() {
     isDailyCompleted = dailyHistory !== null && dailyHistory.length >= 6
   }
 
+  const websiteLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'CloudMaster',
+    url: toAbsoluteUrl('/'),
+  }
+
+  const organizationLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'CloudMaster Team',
+    url: toAbsoluteUrl('/'),
+    logo: toAbsoluteUrl('/icon-512.png'),
+  }
+
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg text-qz-text dark:text-qz-text selection:bg-qz-blue/20">
       <Header
@@ -76,6 +98,8 @@ export default async function Home() {
       />
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }} />
         {user && !onboardingCompleted && (
           <section className="mb-6 rounded-2xl border border-qz-blue/20 bg-qz-blue/5 p-4 md:p-5">
             <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">

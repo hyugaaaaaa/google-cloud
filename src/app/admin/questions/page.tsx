@@ -106,6 +106,8 @@ export default async function AdminQuestionsPage({
       content: normalized.content?.trim() || '',
       answer: normalized.answer?.trim() || '',
       explanation: normalized.explanation?.trim() || '',
+      difficulty: (normalized.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
+      is_active: normalized.is_active !== false,
       explanation_why_correct: normalized.explanation_why_correct || '',
       explanation_why_others_wrong: normalized.explanation_why_others_wrong || '',
       related_concepts: Array.isArray(normalized.related_concepts) ? normalized.related_concepts : [],

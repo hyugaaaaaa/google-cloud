@@ -3,6 +3,25 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+const EXTENDED_QUESTION_COLUMNS = [
+  'explanation_why_correct',
+  'explanation_why_others_wrong',
+  'related_concepts',
+  'difficulty',
+  'is_active',
+]
+
+function hasMissingExtendedQuestionColumn(error: { code?: string; message?: string } | null) {
+  if (!error) return false
+
+  if (error.code === '42703') {
+    return true
+  }
+
+  const message = (error.message || '').toLowerCase()
+  return EXTENDED_QUESTION_COLUMNS.some((column) => message.includes(column))
+}
+
 export async function updateQuestionAction(id: string, updates: {
   content: string;
   options: string[];
@@ -40,6 +59,28 @@ export async function updateQuestionAction(id: string, updates: {
     .from('questions')
     .update(payload)
     .eq('id', id)
+
+  if (error && hasMissingExtendedQuestionColumn(error)) {
+    const { error: legacyError } = await supabase
+      .from('questions')
+      .update({
+        content: payload.content,
+        options: payload.options,
+        answer: payload.answer,
+        explanation: payload.explanation,
+      })
+      .eq('id', id)
+
+    if (legacyError) {
+      console.error('Update question legacy fallback error:', legacyError)
+      return { error: '問題の更新に失敗しました' }
+    }
+
+    revalidatePath('/admin/questions')
+    revalidatePath('/dashboard')
+    revalidatePath('/')
+    return { success: true }
+  }
 
   if (error) {
     console.error('Update question error:', error)
@@ -127,6 +168,30 @@ export async function createQuestionAction(data: {
         .map((concept) => concept.trim())
         .filter(Boolean),
     })
+
+  if (error && hasMissingExtendedQuestionColumn(error)) {
+    const { error: legacyError } = await supabase
+      .from('questions')
+      .insert({
+        category_id: data.category_id,
+        content: data.content.trim(),
+        options: data.options.map((option) => option.trim()),
+        answer: data.answer.trim(),
+        explanation: data.explanation.trim(),
+      })
+
+    if (legacyError) {
+      if (legacyError.code === '23505') {
+        return { error: '同じ問題文の問題が既に存在します' }
+      }
+      console.error('Create question legacy fallback error:', legacyError)
+      return { error: '問題の作成に失敗しました: ' + legacyError.message }
+    }
+
+    revalidatePath('/admin/questions')
+    revalidatePath('/')
+    return { success: true }
+  }
 
   if (error) {
     // UNIQUE制約違反のハンドリング

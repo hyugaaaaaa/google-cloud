@@ -57,7 +57,7 @@ function shouldFallbackToLegacyQuestionSchema(error: QueryError): boolean {
 }
 
 async function runQuestionQueryWithFallback<T>(
-  run: (mode: QuestionQueryMode) => Promise<QueryResult<T>>,
+  run: (mode: QuestionQueryMode) => PromiseLike<QueryResult<T>>,
 ): Promise<QueryResult<T> & { mode: QuestionQueryMode }> {
   const modernResult = await run('modern')
   if (!shouldFallbackToLegacyQuestionSchema(modernResult.error)) {
@@ -69,13 +69,13 @@ async function runQuestionQueryWithFallback<T>(
 }
 
 export async function queryQuestionsArrayWithFallback<T>(
-  run: (mode: QuestionQueryMode) => Promise<QueryResult<T[]>>,
+  run: (mode: QuestionQueryMode) => PromiseLike<QueryResult<T[]>>,
 ) {
   return runQuestionQueryWithFallback(run)
 }
 
 export async function queryQuestionSingleWithFallback<T>(
-  run: (mode: QuestionQueryMode) => Promise<QueryResult<T>>,
+  run: (mode: QuestionQueryMode) => PromiseLike<QueryResult<T>>,
 ) {
   return runQuestionQueryWithFallback(run)
 }
@@ -114,21 +114,23 @@ type RawQuestionRecord = {
   created_at: string
 }
 
-export function normalizeQuestionRecord(raw: RawQuestionRecord): Question {
+export function normalizeQuestionRecord(raw: unknown): Question {
+  const record = (raw || {}) as Partial<RawQuestionRecord>
+
   return {
-    id: raw.id,
-    category_id: raw.category_id,
-    content: raw.content,
-    options: parseOptions(raw.options),
-    answer: raw.answer,
-    explanation: raw.explanation || '',
-    explanation_why_correct: raw.explanation_why_correct || null,
-    explanation_why_others_wrong: raw.explanation_why_others_wrong || null,
-    related_concepts: Array.isArray(raw.related_concepts)
-      ? raw.related_concepts.filter((concept): concept is string => typeof concept === 'string')
+    id: String(record.id || ''),
+    category_id: String(record.category_id || ''),
+    content: String(record.content || ''),
+    options: parseOptions(record.options),
+    answer: String(record.answer || ''),
+    explanation: record.explanation || '',
+    explanation_why_correct: record.explanation_why_correct || null,
+    explanation_why_others_wrong: record.explanation_why_others_wrong || null,
+    related_concepts: Array.isArray(record.related_concepts)
+      ? record.related_concepts.filter((concept): concept is string => typeof concept === 'string')
       : [],
-    difficulty: raw.difficulty || 'medium',
-    is_active: raw.is_active !== false,
-    created_at: raw.created_at,
+    difficulty: record.difficulty || 'medium',
+    is_active: record.is_active !== false,
+    created_at: String(record.created_at || ''),
   }
 }

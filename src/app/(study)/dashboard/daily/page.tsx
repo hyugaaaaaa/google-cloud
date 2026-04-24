@@ -33,6 +33,8 @@ export default async function DailyChallengePage() {
     return <div>データを読み込めませんでした。</div>
   }
 
+  const questionRows = allQuestions as unknown as Array<{ category_id: string }>
+
   // Deterministic selection based on date
   // We use JST date to reset at 24:00 JST
   const now = new Date()
@@ -47,7 +49,7 @@ export default async function DailyChallengePage() {
   const seed = jstDate.split('-').join('') // e.g., 20260418
   
   const dailyQuestions = categories.map(cat => {
-    const catQuestions = allQuestions.filter(q => q.category_id === cat.id)
+    const catQuestions = questionRows.filter(q => q.category_id === cat.id)
     if (catQuestions.length === 0) return null
     
     // Simple deterministic random index

@@ -29,7 +29,7 @@ export default async function MockExamPage() {
   // MVPのため全問題を取得し、サーバー側でシャッフルして20問抽出する
   // ※問題数が増えた場合は、PostgreSQL側に random() ソートのRPC関数を作成推奨
   const { data: questions, error } = await queryQuestionsArrayWithFallback((mode) => {
-    const selectColumns = mode === 'modern'
+    const selectColumns: string = mode === 'modern'
       ? `${QUESTION_SELECT_MODERN}, categories(name)`
       : `${QUESTION_SELECT_LEGACY}, categories(name)`
 
@@ -45,17 +45,22 @@ export default async function MockExamPage() {
     return <div className="min-h-screen flex items-center justify-center p-8 text-red-500">問題の読み込みに失敗しました。</div>
   }
 
+  const questionRows = (questions || []) as unknown as Array<{
+    id: string
+    categories?: { name: string }[] | { name: string } | null
+  }>
   const seed = `${new Date().toISOString().slice(0, 10)}:${user?.id || 'guest'}`
-  const selectedQuestions = [...questions]
+  const selectedQuestions = [...questionRows]
     .sort((a, b) => pseudoRandomScore(a.id, seed) - pseudoRandomScore(b.id, seed))
     .slice(0, 20)
 
   // TypeScript型にパース
   const processedQuestions: (Question & { categoryName: string })[] = selectedQuestions.map((question) => {
+    const row = question as { categories?: { name: string }[] | { name: string } | null }
     const normalized = normalizeQuestionRecord(question)
-    const categoryName = Array.isArray(question.categories)
-      ? question.categories[0]?.name || '不明'
-      : question.categories?.name || '不明'
+    const categoryName = Array.isArray(row.categories)
+      ? row.categories[0]?.name || '不明'
+      : row.categories?.name || '不明'
 
     return {
       ...normalized,

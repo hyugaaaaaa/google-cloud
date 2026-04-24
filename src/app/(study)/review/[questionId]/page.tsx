@@ -82,7 +82,7 @@ export default async function SpecificReviewPage({
       userEmail={user.email || ''} 
       streak={streak}
       initialBookmarkedIds={initialBookmarkedIds} 
-      sessionKey={`cloudmaster:review:single:${question.id}:${user.id}`}
+      sessionKey={`cloudmaster:review:single:${processedQuestion.id}:${user.id}`}
       planTier={planTier}
       maxQuestionCap={entitlements.categoryQuestionCap}
       xp={xp}

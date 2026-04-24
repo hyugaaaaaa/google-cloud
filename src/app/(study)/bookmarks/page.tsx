@@ -79,7 +79,7 @@ export default async function BookmarksPage() {
 
   // ブックマークされた問題の詳細を取得（カテゴリ名を含める）
   const { data: questions, error: qError } = await queryQuestionsArrayWithFallback((mode) => {
-    const selectColumns = mode === 'modern'
+    const selectColumns: string = mode === 'modern'
       ? `${QUESTION_SELECT_MODERN}, categories(name)`
       : `${QUESTION_SELECT_LEGACY}, categories(name)`
 
@@ -104,10 +104,11 @@ export default async function BookmarksPage() {
 
   // 型変換とデータの整形
   const processedBookmarks = (questions || []).map((question) => {
+    const row = question as { categories?: { name: string }[] | { name: string } | null }
     const normalized = normalizeQuestionRecord(question)
-    const categoryName = Array.isArray(question.categories)
-      ? question.categories[0]?.name || '不明'
-      : question.categories?.name || '不明'
+    const categoryName = Array.isArray(row.categories)
+      ? row.categories[0]?.name || '不明'
+      : row.categories?.name || '不明'
 
     return {
       ...normalized,

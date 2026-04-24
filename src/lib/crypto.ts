@@ -10,8 +10,11 @@ const AUTH_TAG_LENGTH = 16;
 // 環境変数のチェック
 const ENCRYPTION_KEY_RAW = process.env.URL_ENCRYPTION_KEY;
 
-if (!ENCRYPTION_KEY_RAW && process.env.NODE_ENV === 'production') {
-  console.warn('WARNING: URL_ENCRYPTION_KEY is not set. Using fallback key for build.');
+if (!ENCRYPTION_KEY_RAW) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('URL_ENCRYPTION_KEY is required in production.');
+  }
+  console.warn('WARNING: URL_ENCRYPTION_KEY is not set. Using local dev fallback key.');
 }
 
 // キーをSHA-256でハッシュ化し、常に32バイト（256ビット）の鍵を生成

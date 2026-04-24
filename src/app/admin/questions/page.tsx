@@ -5,6 +5,7 @@ import { CategoryFilter } from '@/components/admin/CategoryFilter'
 import { QuestionCreator } from '@/components/admin/QuestionCreator'
 import { BulkImporter } from '@/components/admin/BulkImporter'
 import Link from 'next/link'
+import { isAdminUser } from '@/lib/authz'
 import {
   normalizeQuestionRecord,
   queryQuestionsArrayWithFallback,
@@ -33,7 +34,7 @@ export default async function AdminQuestionsPage({
     console.error('Auth error:', e)
   }
 
-  const isAdmin = user?.email === 'hyuga0510@icloud.com'
+  const isAdmin = isAdminUser(user)
 
   if (!isAdmin) {
     return (
@@ -132,7 +133,7 @@ export default async function AdminQuestionsPage({
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg">
-      <Header userEmail={user?.email} />
+      <Header userEmail={user?.email} showAdminLink />
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">

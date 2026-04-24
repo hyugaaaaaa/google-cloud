@@ -1,10 +1,40 @@
 const CACHE_NAME = 'cloudmaster-v2';
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
   '/icon-512.png',
   '/favicon.ico'
 ];
+
+const CACHEABLE_PREFIXES = [
+  '/_next/static/',
+];
+
+const CACHEABLE_EXTENSIONS = [
+  '.js',
+  '.css',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+  '.svg',
+  '.ico',
+  '.woff',
+  '.woff2',
+];
+
+function shouldCache(requestUrl) {
+  const pathname = new URL(requestUrl).pathname;
+
+  if (STATIC_ASSETS.includes(pathname)) {
+    return true;
+  }
+
+  if (CACHEABLE_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return true;
+  }
+
+  return CACHEABLE_EXTENSIONS.some((extension) => pathname.endsWith(extension));
+}
 
 // インストール時に静的アセットをキャッシュ
 self.addEventListener('install', (event) => {
@@ -36,39 +66,37 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // GETリクエスト以外、またはブラウザ拡張機能などのリクエストは無視
   if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) return;
+  if (event.request.mode === 'navigate') return;
+  if (!shouldCache(event.request.url)) return;
 
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((cachedResponse) => {
         const fetchPromise = fetch(event.request).then((networkResponse) => {
           // 正常なレスポンスのみキャッシュを更新
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const cacheControl = networkResponse.headers.get('Cache-Control') || '';
+          const isPrivateResponse = /no-store|private/i.test(cacheControl);
+
+          if (
+            networkResponse &&
+            networkResponse.status === 200 &&
+            networkResponse.type === 'basic' &&
+            !isPrivateResponse
+          ) {
             cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
         }).catch(() => {
-          // ネットワークエラー時はキャッシュにフォールバック、
-          // キャッシュもなければ503エラーレスポンスを返す（nullはNG）
-          return cachedResponse || caches.match('/').then((fallback) => {
-            return fallback || new Response('Network error', {
-              status: 503,
-              statusText: 'Service Unavailable',
-              headers: { 'Content-Type': 'text/plain' }
-            });
-          });
-        });
-
-        // キャッシュがあればそれを返しつつ裏で更新、なければネットワークを待つ
-        return cachedResponse || fetchPromise;
-      }).catch(() => {
-        // オフラインかつキャッシュがない場合のフォールバック
-        return caches.match('/').then((fallback) => {
-          return fallback || new Response('Offline', {
+          // ネットワークエラー時はキャッシュにフォールバック
+          return cachedResponse || new Response('Network error', {
             status: 503,
             statusText: 'Service Unavailable',
             headers: { 'Content-Type': 'text/plain' }
           });
         });
+
+        // キャッシュがあればそれを返しつつ裏で更新、なければネットワークを待つ
+        return cachedResponse || fetchPromise;
       });
     })
   );

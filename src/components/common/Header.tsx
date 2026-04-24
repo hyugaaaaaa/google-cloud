@@ -11,9 +11,26 @@ type HeaderProps = {
   xp?: number
   level?: number
   planTier?: 'free' | 'pro'
+  showAdminLink?: boolean
 }
 
-export function Header({ userEmail, streak, xp = 0, level = 1, planTier = 'free' }: HeaderProps) {
+export function Header({
+  userEmail,
+  streak,
+  xp = 0,
+  level = 1,
+  planTier = 'free',
+  showAdminLink = false,
+}: HeaderProps) {
+  const publicAdminAllowlist = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean)
+  const showAdmin = showAdminLink || (
+    Boolean(userEmail) &&
+    publicAdminAllowlist.includes((userEmail || '').toLowerCase())
+  )
+
   return (
     <header className="sticky top-0 z-50 w-full bg-white dark:bg-[#1A1D23] border-b border-qz-border dark:border-[#2E3856] h-[64px] flex items-center shadow-sm">
       <div className="container mx-auto px-4 flex justify-between items-center max-w-7xl">
@@ -35,7 +52,7 @@ export function Header({ userEmail, streak, xp = 0, level = 1, planTier = 'free'
               <Link href="/dashboard" className="text-[15px] font-bold text-qz-text dark:text-white hover:text-qz-blue transition-colors flex items-center gap-2">
                 <LayoutDashboard className="w-4 h-4" /> ダッシュボード
               </Link>
-              {userEmail === 'hyuga0510@icloud.com' && (
+              {showAdmin && (
                 <Link href="/admin/questions" className="text-[15px] font-bold text-qz-text-light hover:text-qz-blue transition-colors flex items-center gap-2 border-l border-qz-border pl-8">
                   <Edit2 className="w-4 h-4" /> 管理
                 </Link>

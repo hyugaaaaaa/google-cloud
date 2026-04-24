@@ -67,7 +67,9 @@ npm install
 # .env.local に以下を設定
 # NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
-# CRYPTO_SECRET_KEY=<32文字以上のランダム文字列>
+# URL_ENCRYPTION_KEY=<32文字以上のランダム文字列>
+# ADMIN_EMAILS=<admin1@example.com,admin2@example.com>   # 任意
+# NEXT_PUBLIC_ADMIN_EMAILS=<admin1@example.com,admin2@example.com> # 任意（管理リンク表示用）
 
 # 3. 開発サーバーの起動
 npm run dev
@@ -88,7 +90,9 @@ Vercel の Project Settings → Environment Variables に以下を追加して�
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase プロジェクト URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase の匿名キー |
-| `CRYPTO_SECRET_KEY` | URL 暗号化用シークレット（32文字以上） |
+| `URL_ENCRYPTION_KEY` | URL 暗号化用シークレット（32文字以上） |
+| `ADMIN_EMAILS` | 管理者メールの許可リスト（任意。カンマ区切り） |
+| `NEXT_PUBLIC_ADMIN_EMAILS` | 管理リンク表示用の許可リスト（任意。カンマ区切り） |
 
 ---
 

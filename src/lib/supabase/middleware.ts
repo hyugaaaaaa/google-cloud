@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isAdminUser } from '@/lib/authz'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -46,8 +47,7 @@ export async function updateSession(request: NextRequest) {
   const isPublicStudyPage = 
     request.nextUrl.pathname.startsWith('/category/') ||
     request.nextUrl.pathname.startsWith('/mock-exam') ||
-    request.nextUrl.pathname.startsWith('/dashboard/daily') ||
-    request.nextUrl.pathname.startsWith('/admin')
+    request.nextUrl.pathname.startsWith('/dashboard/daily')
 
 
   // If user is not logged in and trying to access protected pages, redirect to login
@@ -56,6 +56,20 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+  }
+
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+
+    if (!isAdminUser(user)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
   }
 
   // If user is logged in and trying to access auth pages, redirect to home

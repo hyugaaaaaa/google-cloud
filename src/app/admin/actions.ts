@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { isAdminUser } from '@/lib/authz'
 
 const EXTENDED_QUESTION_COLUMNS = [
   'explanation_why_correct',
@@ -37,7 +38,7 @@ export async function updateQuestionAction(id: string, updates: {
 
   // 認証・管理者チェック
   const { data: { user } } = await supabase.auth.getUser()
-  if (user?.email !== 'hyuga0510@icloud.com') {
+  if (!isAdminUser(user)) {
     return { error: '管理者権限が必要です' }
   }
 
@@ -99,7 +100,7 @@ export async function deleteQuestionAction(id: string) {
 
   // 認証・管理者チェック
   const { data: { user } } = await supabase.auth.getUser()
-  if (user?.email !== 'hyuga0510@icloud.com') {
+  if (!isAdminUser(user)) {
     return { error: '管理者権限が必要です' }
   }
 
@@ -132,7 +133,7 @@ export async function createQuestionAction(data: {
 
   // 認証・管理者チェック
   const { data: { user } } = await supabase.auth.getUser()
-  if (user?.email !== 'hyuga0510@icloud.com') {
+  if (!isAdminUser(user)) {
     return { error: '管理者権限が必要です' }
   }
 
@@ -218,7 +219,7 @@ export async function bulkCreateQuestionsAction(items: {
 
   // 認証・管理者チェック
   const { data: { user } } = await supabase.auth.getUser()
-  if (user?.email !== 'hyuga0510@icloud.com') {
+  if (!isAdminUser(user)) {
     return { error: '管理者権限が必要です' }
   }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import {
   Radar,
   RadarChart,
@@ -41,11 +41,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payl
 }
 
 export function CategoryRadarChart({ categories }: CategoryRadarChartProps) {
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
+  const isClient = typeof window !== 'undefined'
 
   const chartData = categories.map((cat) => ({
     subject: cat.name,
@@ -68,7 +64,7 @@ export function CategoryRadarChart({ categories }: CategoryRadarChartProps) {
 
       {/* Chart */}
       <div className="w-full h-[280px] md:h-[360px] relative z-10">
-        {!isMounted ? null : chartData.length > 2 ? (
+        {!isClient ? null : chartData.length > 2 ? (
           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <RadarChart cx="50%" cy="50%" outerRadius="72%" data={chartData}>
               <PolarGrid

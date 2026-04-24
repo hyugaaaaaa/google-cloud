@@ -10,6 +10,7 @@ import { Header } from '@/components/common/Header'
 import { ArrowRight, Zap, Trophy, ShieldCheck, LayoutDashboard, ChevronRight, Target, CheckCircle2 } from 'lucide-react'
 import { CategoryCard } from '@/components/study/CategoryCard'
 import { updateStreakAction } from '@/app/(study)/actions'
+import { resolvePlanTier } from '@/lib/feature-gates'
 
 export default async function Home() {
   const supabase = await createClient()
@@ -19,11 +20,27 @@ export default async function Home() {
 
   // ログイン中ならストリークを更新
   let streak = 0
+  let xp = 0
+  let level = 1
+  let planTier = resolvePlanTier(null)
+  let onboardingCompleted = true
   if (user) {
     const result = await updateStreakAction()
     if ('streak' in result) {
       streak = result.streak || 0
     }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('streak_count, xp, level, plan_tier, onboarding_completed')
+      .eq('id', user.id)
+      .single()
+
+    streak = profile?.streak_count ?? streak
+    xp = profile?.xp || 0
+    level = profile?.level || 1
+    planTier = resolvePlanTier(profile?.plan_tier)
+    onboardingCompleted = profile?.onboarding_completed ?? true
   }
 
   // Fetch categories with question counts
@@ -50,9 +67,44 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg text-qz-text dark:text-qz-text selection:bg-qz-blue/20">
-      <Header userEmail={user?.email || ''} streak={streak} />
+      <Header
+        userEmail={user?.email || ''}
+        streak={streak}
+        xp={xp}
+        level={level}
+        planTier={planTier}
+      />
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
+        {user && !onboardingCompleted && (
+          <section className="mb-6 rounded-2xl border border-qz-blue/20 bg-qz-blue/5 p-4 md:p-5">
+            <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-qz-blue">Onboarding</p>
+                <p className="mt-1 text-sm font-bold text-qz-text-light">
+                  最初の学習プラン設定で、弱点分析とリコメンド精度を高めましょう。
+                </p>
+              </div>
+              <Link href="/onboarding" className="qz-btn-primary whitespace-nowrap !py-2 !px-4 text-sm">
+                2分で設定する
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {user && planTier !== 'pro' && (
+          <section className="mb-6 rounded-2xl border border-qz-yellow/30 bg-qz-yellow/10 p-4 md:p-5">
+            <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
+              <p className="text-sm font-bold text-qz-text-light">
+                Freeプラン: カテゴリ学習は1セッション20問まで、模擬試験は1日1回です。
+              </p>
+              <Link href="/#pricing" className="rounded-xl bg-qz-text px-4 py-2 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-qz-blue">
+                Proを確認
+              </Link>
+            </div>
+          </section>
+        )}
+
         {/* Hero Section */}
         {!user && (
           <section className="bg-white dark:bg-[#1A1D23] qz-card p-6 md:p-16 mb-8 md:mb-16 flex flex-col items-center text-center overflow-hidden relative">
@@ -209,6 +261,52 @@ export default async function Home() {
             </div>
             <h4 className="font-black mb-2">詳細な履歴</h4>
             <p className="text-sm text-qz-text-light">自分の苦手分野をグラフ化。</p>
+          </div>
+        </section>
+
+        <section id="pricing" className="pb-12">
+          <h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tight mb-6">Pricing</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="qz-card p-6">
+              <p className="text-xs font-black uppercase tracking-widest text-qz-text-light">Free</p>
+              <p className="mt-2 text-3xl font-black">¥0</p>
+              <ul className="mt-4 space-y-2 text-sm font-bold text-qz-text-light">
+                <li>・カテゴリ学習は1セッション最大20問</li>
+                <li>・Daily Challenge</li>
+                <li>・模擬試験は1日1回</li>
+                <li>・基本ダッシュボード</li>
+              </ul>
+            </div>
+            <div className="qz-card p-6 border-qz-blue/40 ring-2 ring-qz-blue/20">
+              <p className="text-xs font-black uppercase tracking-widest text-qz-blue">Pro</p>
+              <p className="mt-2 text-3xl font-black">Coming Soon</p>
+              <ul className="mt-4 space-y-2 text-sm font-bold text-qz-text-light">
+                <li>・無制限のカテゴリ学習 / 模擬試験</li>
+                <li>・弱点分析レコメンド（優先カテゴリ提案）</li>
+                <li>・詳細分析（推移 / レーダー / セッション分析）</li>
+                <li>・AI関連機能（順次追加）</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section className="pb-12">
+          <div className="qz-card p-6 md:p-8">
+            <h3 className="text-xl font-black mb-4">CDL 学習ガイド</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <Link href="/what-is-google-cloud-cdl" className="rounded-xl border border-qz-border px-4 py-3 text-sm font-bold hover:border-qz-blue transition-colors">
+                What is CDL
+              </Link>
+              <Link href="/study-guide" className="rounded-xl border border-qz-border px-4 py-3 text-sm font-bold hover:border-qz-blue transition-colors">
+                Study Guide
+              </Link>
+              <Link href="/exam-tips" className="rounded-xl border border-qz-border px-4 py-3 text-sm font-bold hover:border-qz-blue transition-colors">
+                Exam Tips
+              </Link>
+              <Link href="/category-explanations" className="rounded-xl border border-qz-border px-4 py-3 text-sm font-bold hover:border-qz-blue transition-colors">
+                Category Explanations
+              </Link>
+            </div>
           </div>
         </section>
       </main>

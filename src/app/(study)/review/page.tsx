@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { StudyClient } from '@/app/(study)/category/[categoryId]/StudyClient'
 import { Header } from '@/components/common/Header'
 import type { Question } from '@/types/app.types'
+import { getEntitlements, resolvePlanTier } from '@/lib/feature-gates'
 
 export default async function ReviewPage() {
   const supabase = await createClient()
@@ -36,16 +37,20 @@ export default async function ReviewPage() {
   // プロフィールを取得（streak用）
   const { data: profile } = await supabase
     .from('profiles')
-    .select('streak_count')
+    .select('streak_count, xp, level, plan_tier')
     .eq('id', user.id)
     .single()
 
   const streak = profile?.streak_count || 0
+  const xp = profile?.xp || 0
+  const level = profile?.level || 1
+  const planTier = resolvePlanTier(profile?.plan_tier)
+  const entitlements = getEntitlements({ isGuest: false, planTier })
 
   if (wrongQuestionIds.length === 0) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={user.email || ''} streak={streak} />
+        <Header userEmail={user.email || ''} streak={streak} xp={xp} level={level} planTier={planTier} />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="qz-card p-12 text-center max-w-lg">
             <h2 className="text-2xl font-black mb-4">完璧です！</h2>
@@ -60,8 +65,22 @@ export default async function ReviewPage() {
   // 問題データを取得
   const { data: questions, error: qError } = await supabase
     .from('questions')
-    .select('*')
+    .select(`
+      id,
+      category_id,
+      content,
+      options,
+      answer,
+      explanation,
+      explanation_why_correct,
+      explanation_why_others_wrong,
+      related_concepts,
+      difficulty,
+      is_active,
+      created_at
+    `)
     .in('id', wrongQuestionIds)
+    .eq('is_active', true)
 
   if (qError) {
     console.error('Error fetching questions for review:', qError)
@@ -76,6 +95,11 @@ export default async function ReviewPage() {
     options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
     answer: q.answer,
     explanation: q.explanation || "",
+    explanation_why_correct: q.explanation_why_correct || null,
+    explanation_why_others_wrong: q.explanation_why_others_wrong || null,
+    related_concepts: Array.isArray(q.related_concepts) ? q.related_concepts : [],
+    difficulty: q.difficulty || 'medium',
+    is_active: q.is_active,
     created_at: q.created_at
   }))
 
@@ -94,6 +118,12 @@ export default async function ReviewPage() {
       userEmail={user.email || ''} 
       streak={streak}
       initialBookmarkedIds={initialBookmarkedIds} 
+      incorrectQuestionIds={wrongQuestionIds}
+      sessionKey={`cloudmaster:review:all:${user.id}`}
+      planTier={planTier}
+      maxQuestionCap={entitlements.categoryQuestionCap}
+      xp={xp}
+      level={level}
     />
   )
 }

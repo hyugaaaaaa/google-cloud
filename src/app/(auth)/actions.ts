@@ -4,7 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-export async function loginAction(prevState: any, formData: FormData) {
+type AuthActionState = {
+  error: string
+}
+
+export async function loginAction(_: AuthActionState, formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
@@ -27,7 +31,7 @@ export async function loginAction(prevState: any, formData: FormData) {
   redirect('/')
 }
 
-export async function signupAction(prevState: any, formData: FormData) {
+export async function signupAction(_: AuthActionState, formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const nickname = formData.get('nickname') as string
@@ -67,7 +71,7 @@ export async function signupAction(prevState: any, formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect('/onboarding')
 }
 
 export async function logoutAction() {

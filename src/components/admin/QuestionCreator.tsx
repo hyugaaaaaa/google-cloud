@@ -16,6 +16,11 @@ const EMPTY_FORM = {
   options: ['', '', '', ''],
   answer: '',
   explanation: '',
+  explanation_why_correct: '',
+  explanation_why_others_wrong: '',
+  related_concepts: '',
+  difficulty: 'medium' as 'easy' | 'medium' | 'hard',
+  is_active: true,
 }
 
 export function QuestionCreator({ categories }: { categories: Category[] }) {
@@ -42,7 +47,13 @@ export function QuestionCreator({ categories }: { categories: Category[] }) {
     }
 
     setIsSaving(true)
-    const result = await createQuestionAction(form)
+    const result = await createQuestionAction({
+      ...form,
+      related_concepts: form.related_concepts
+        .split(',')
+        .map((concept) => concept.trim())
+        .filter(Boolean),
+    })
     setIsSaving(false)
 
     if (result.success) {
@@ -179,6 +190,69 @@ export function QuestionCreator({ categories }: { categories: Category[] }) {
                   value={form.explanation}
                   onChange={e => setForm({ ...form, explanation: e.target.value })}
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-qz-text-light mb-2">
+                  Why Correct
+                </label>
+                <textarea
+                  className="qz-input w-full min-h-[80px] resize-y"
+                  placeholder="なぜ正解なのかを明記"
+                  value={form.explanation_why_correct}
+                  onChange={e => setForm({ ...form, explanation_why_correct: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-qz-text-light mb-2">
+                  Why Others Are Wrong
+                </label>
+                <textarea
+                  className="qz-input w-full min-h-[80px] resize-y"
+                  placeholder="他選択肢が不正解な理由を明記"
+                  value={form.explanation_why_others_wrong}
+                  onChange={e => setForm({ ...form, explanation_why_others_wrong: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-qz-text-light mb-2">
+                  Related Concepts（カンマ区切り）
+                </label>
+                <input
+                  className="qz-input w-full"
+                  placeholder="例: 責任共有モデル, コスト最適化"
+                  value={form.related_concepts}
+                  onChange={e => setForm({ ...form, related_concepts: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-qz-text-light mb-2">
+                    Difficulty
+                  </label>
+                  <select
+                    value={form.difficulty}
+                    onChange={e => setForm({ ...form, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })}
+                    className="qz-input w-full bg-white dark:bg-[#2E3856]"
+                  >
+                    <option value="easy">easy</option>
+                    <option value="medium">medium</option>
+                    <option value="hard">hard</option>
+                  </select>
+                </div>
+                <div className="flex items-end pb-2">
+                  <label className="flex items-center gap-2 text-sm font-bold text-qz-text-light">
+                    <input
+                      type="checkbox"
+                      checked={form.is_active}
+                      onChange={e => setForm({ ...form, is_active: e.target.checked })}
+                    />
+                    Learner向けに公開
+                  </label>
+                </div>
               </div>
             </div>
 

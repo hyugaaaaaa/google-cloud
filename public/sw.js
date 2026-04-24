@@ -74,3 +74,52 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Push notifications (PWA)
+self.addEventListener('push', (event) => {
+  let payload = {
+    title: 'CloudMaster',
+    body: '今日のデイリーチャレンジで学習を継続しましょう。',
+    url: '/dashboard/daily'
+  };
+
+  try {
+    if (event.data) {
+      const data = event.data.json();
+      payload = {
+        title: data.title || payload.title,
+        body: data.body || payload.body,
+        url: data.url || payload.url
+      };
+    }
+  } catch {
+    // Keep default payload if parsing fails
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: '/icon-512.png',
+      badge: '/icon-512.png',
+      data: { url: payload.url }
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification?.data?.url || '/dashboard/daily';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+      return null;
+    })
+  );
+});

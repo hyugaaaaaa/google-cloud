@@ -8,9 +8,12 @@ import { ThemeToggle } from './ThemeToggle'
 type HeaderProps = {
   userEmail?: string
   streak?: number
+  xp?: number
+  level?: number
+  planTier?: 'free' | 'pro'
 }
 
-export function Header({ userEmail, streak }: HeaderProps) {
+export function Header({ userEmail, streak, xp = 0, level = 1, planTier = 'free' }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full bg-white dark:bg-[#1A1D23] border-b border-qz-border dark:border-[#2E3856] h-[64px] flex items-center shadow-sm">
       <div className="container mx-auto px-4 flex justify-between items-center max-w-7xl">
@@ -64,6 +67,21 @@ export function Header({ userEmail, streak }: HeaderProps) {
                 <Flame className="w-3.5 h-3.5 md:w-4 md:h-4 fill-orange-500" />
                 <span className="text-[10px] md:text-xs font-black">{streak || 0}</span>
               </Link>
+
+              <Link href="/dashboard" className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-qz-blue/10 text-qz-blue rounded-full border border-qz-blue/20 active:scale-95 transition-all">
+                <span className="text-[10px] md:text-xs font-black">Lv.{level}</span>
+                <span className="text-[10px] font-bold opacity-80">{xp} XP</span>
+              </Link>
+
+              <span
+                className={`hidden sm:inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${
+                  planTier === 'pro'
+                    ? 'border-qz-success/30 bg-qz-success/10 text-qz-success'
+                    : 'border-qz-border bg-qz-bg text-qz-text-light dark:border-[#2E3856] dark:bg-[#2E3856]'
+                }`}
+              >
+                {planTier}
+              </span>
               
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-qz-bg dark:bg-[#2E3856] rounded-full border border-qz-border dark:border-[#2E3856]">
                 <User className="w-4 h-4 text-qz-blue" />

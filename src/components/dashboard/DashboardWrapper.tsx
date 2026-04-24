@@ -4,7 +4,7 @@ import React, { useMemo } from 'react'
 import { Header } from '@/components/common/Header'
 import { Achievements } from '@/components/dashboard/Achievements'
 import { CategoryList } from '@/components/dashboard/CategoryList'
-import { Zap, ChevronRight, Star, BarChart3 } from 'lucide-react'
+import { Star, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 
 type DashboardData = {

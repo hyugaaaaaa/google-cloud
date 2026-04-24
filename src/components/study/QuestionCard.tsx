@@ -22,7 +22,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   onToggleBookmark
 }) => {
   return (
-    <div className="w-full max-w-2xl mx-auto transition-all duration-500 ease-out translate-y-0 opacity-100">
+    <div className="w-full max-w-2xl mx-auto transition-all duration-200 ease-out translate-y-0 opacity-100">
       <div className="bg-white dark:bg-[#1A1D23] rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-qz-border dark:border-[#2E3856] overflow-hidden">
         {/* Card Header */}
         <div className="px-8 pt-8 pb-4">

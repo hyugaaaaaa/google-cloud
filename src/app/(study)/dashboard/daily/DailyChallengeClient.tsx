@@ -10,6 +10,7 @@ import { QuestionCard } from '@/components/study/QuestionCard'
 import { ExplanationArea } from '@/components/study/ExplanationArea'
 import { useDailyChallenge } from '@/hooks/useDailyChallenge'
 import { toast } from 'sonner'
+import type { Question } from '@/types/app.types'
 
 export function DailyChallengeClient({ 
   questions, 
@@ -17,17 +18,23 @@ export function DailyChallengeClient({
   streak,
   isCompleted: initialCompleted, 
   dateString,
-  initialBookmarkedIds = []
+  initialBookmarkedIds = [],
+  xp = 0,
+  level = 1,
+  planTier = 'free',
 }: { 
-  questions: any[], 
+  questions: Question[], 
   userEmail?: string, 
   streak?: number,
   isCompleted: boolean,
   dateString: string,
-  initialBookmarkedIds?: string[]
+  initialBookmarkedIds?: string[],
+  xp?: number,
+  level?: number,
+  planTier?: 'free' | 'pro',
 }) {
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(initialBookmarkedIds));
-  const [isBookmarkPending, startBookmarkTransition] = useTransition();
+  const [, startBookmarkTransition] = useTransition();
 
   const {
     currentIndex,
@@ -53,8 +60,21 @@ export function DailyChallengeClient({
       }
 
       try {
-        await saveBulkHistoryAction(finalAnswers, 'daily');
-        toast.success("チャレンジを記録しました！");
+        const result = await saveBulkHistoryAction(finalAnswers, 'daily');
+        if ('error' in result && result.error) {
+          toast.error("履歴の保存に失敗しました");
+          return;
+        }
+        const gainedXp = 'xpAwarded' in result ? result.xpAwarded || 0 : 0;
+        const leveledUp = 'newLevel' in result ? result.newLevel : undefined;
+        toast.success(
+          `チャレンジを記録しました (+${gainedXp} XP)`,
+          {
+            description: leveledUp
+              ? `Level ${leveledUp} に到達しました`
+              : undefined,
+          },
+        );
       } catch (error) {
         console.error("Failed to save daily history:", error);
         toast.error("履歴の保存に失敗しました");
@@ -109,7 +129,7 @@ export function DailyChallengeClient({
 
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
         <main className="flex-grow flex items-center justify-center p-4">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -149,7 +169,7 @@ export function DailyChallengeClient({
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-      <Header userEmail={userEmail} streak={streak} />
+      <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
       
       <main className="container mx-auto px-4 py-8 max-w-3xl flex-grow flex flex-col">
         {/* Progress Header */}

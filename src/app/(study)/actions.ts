@@ -17,6 +17,52 @@ const bulkHistorySchema = z.array(z.object({
   userAnswer: z.string().optional().nullable()
 }))
 
+function calculateXpForAnswer(isCorrect: boolean) {
+  return isCorrect ? 12 : 4;
+}
+
+function calculateBulkBonus(
+  records: { isCorrect: boolean }[],
+  studyMode: string,
+): number {
+  if (studyMode === 'daily' && records.length >= 6) {
+    return 20;
+  }
+
+  if (studyMode === 'mock' && records.length >= 20) {
+    const correctCount = records.filter((record) => record.isCorrect).length;
+    const score = correctCount / records.length;
+    if (score >= 0.8) return 60;
+    if (score >= 0.7) return 40;
+  }
+
+  return 0;
+}
+
+async function awardXp(userId: string, xpDelta: number, supabase: Awaited<ReturnType<typeof createClient>>) {
+  if (xpDelta <= 0) {
+    return { xpAwarded: 0 };
+  }
+
+  const { data: xpResult, error: xpError } = await supabase.rpc('add_profile_xp', {
+    target_user_id: userId,
+    xp_delta: xpDelta,
+  });
+
+  if (xpError) {
+    console.error('XP award failed:', xpError);
+    return { xpAwarded: 0 };
+  }
+
+  const latest = Array.isArray(xpResult) ? xpResult[0] : null;
+
+  return {
+    xpAwarded: xpDelta,
+    newXp: latest?.new_xp as number | undefined,
+    newLevel: latest?.new_level as number | undefined,
+  };
+}
+
 export async function saveHistoryAction(questionId: string, isCorrect: boolean, userAnswer?: string, studyMode: string = 'study') {
   // バリデーション
   const validated = historySchema.safeParse({ questionId, isCorrect, userAnswer, studyMode })
@@ -45,10 +91,12 @@ export async function saveHistoryAction(questionId: string, isCorrect: boolean, 
     return { error: error.message }
   }
 
-  return { success: true }
+  const xpResult = await awardXp(user.id, calculateXpForAnswer(validated.data.isCorrect), supabase);
+
+  return { success: true, ...xpResult }
 }
 
-export async function saveBulkHistoryAction(records: any[], studyMode: string = 'study') {
+export async function saveBulkHistoryAction(records: unknown[], studyMode: string = 'study') {
   // バリデーション
   const validatedRecords = bulkHistorySchema.safeParse(records)
   if (!validatedRecords.success) {
@@ -77,7 +125,14 @@ export async function saveBulkHistoryAction(records: any[], studyMode: string = 
     return { error: error.message }
   }
 
-  return { success: true }
+  const baseXp = validatedRecords.data.reduce(
+    (sum, record) => sum + calculateXpForAnswer(record.isCorrect),
+    0,
+  );
+  const bonusXp = calculateBulkBonus(validatedRecords.data, studyMode);
+  const xpResult = await awardXp(user.id, baseXp + bonusXp, supabase);
+
+  return { success: true, ...xpResult }
 }
 
 export async function updateStreakAction() {
@@ -88,7 +143,7 @@ export async function updateStreakAction() {
   // プロフィール取得
   const { data: profile } = await supabase
     .from('profiles')
-    .select('streak_count, last_login_at')
+    .select('streak_count, last_login_at, last_streak_reward_at')
     .eq('id', user.id)
     .single()
 
@@ -129,7 +184,23 @@ export async function updateStreakAction() {
       return { error: updateError.message }
     }
 
-    return { success: true, streak: newStreak }
+    const todayDate = todayStr;
+    const rewardAlreadyGiven = profile.last_streak_reward_at === todayDate;
+    let rewardXp = 0;
+    let rewardLevel: number | undefined;
+
+    if (!rewardAlreadyGiven && newStreak > 0 && newStreak % 7 === 0) {
+      const reward = await awardXp(user.id, 75, supabase);
+      rewardXp = reward.xpAwarded;
+      rewardLevel = reward.newLevel;
+
+      await supabase
+        .from('profiles')
+        .update({ last_streak_reward_at: todayDate })
+        .eq('id', user.id);
+    }
+
+    return { success: true, streak: newStreak, rewardXp, rewardLevel }
   } else {
     // 初回ログイン
     const { error: updateError } = await supabase
@@ -145,7 +216,7 @@ export async function updateStreakAction() {
       return { error: updateError.message }
     }
 
-    return { success: true, streak: 1 }
+    return { success: true, streak: 1, rewardXp: 0 }
   }
 }
 

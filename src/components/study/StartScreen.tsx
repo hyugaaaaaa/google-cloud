@@ -1,25 +1,77 @@
 'use client'
 
 import React from 'react'
-import { Zap, ArrowRight } from 'lucide-react'
+import { Zap, ArrowRight, RotateCcw, XCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
 interface StartScreenProps {
   totalQuestions: number;
-  onStart: (count: number) => void;
+  onStart: (config: { count: number; source: 'all' | 'incorrect' }) => void;
+  incorrectQuestionCount?: number;
+  hasSavedSession?: boolean;
+  savedSessionMeta?: { current: number; total: number } | null;
+  onResumeSession?: () => void;
+  onDiscardSession?: () => void;
+  maxQuestionCap?: number;
+  isFreeTier?: boolean;
 }
 
-export const StartScreen: React.FC<StartScreenProps> = ({ totalQuestions, onStart }) => {
+export const StartScreen: React.FC<StartScreenProps> = ({
+  totalQuestions,
+  onStart,
+  incorrectQuestionCount = 0,
+  hasSavedSession = false,
+  savedSessionMeta = null,
+  onResumeSession,
+  onDiscardSession,
+  maxQuestionCap = Number.POSITIVE_INFINITY,
+  isFreeTier = false,
+}) => {
+  const effectiveAllCount = Number.isFinite(maxQuestionCap)
+    ? Math.min(totalQuestions, maxQuestionCap)
+    : totalQuestions;
+
   const modes = [
     { count: 10, label: "クイック", desc: "隙間時間に最適", icon: <Zap className="w-5 h-5 text-qz-blue" /> },
     { count: 20, label: "スタンダード", desc: "しっかり確認" },
     { count: 40, label: "チャレンジ", desc: "全問マスター" },
-    { count: -1, label: "すべて", desc: "網羅的に学習", primary: true },
-  ];
+    { count: effectiveAllCount, label: "すべて", desc: "網羅的に学習", primary: true },
+  ].filter((mode) => mode.count <= effectiveAllCount);
 
   return (
     <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
       <div className="max-w-2xl w-full qz-card p-10 text-center transition-all duration-500 opacity-100 translate-y-0">
+        {hasSavedSession && savedSessionMeta && (
+          <div className="mb-8 rounded-2xl border border-qz-blue/20 bg-qz-blue/5 p-5 text-left">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-qz-blue">
+                  <RotateCcw className="h-4 w-4" />
+                  セッションを再開
+                </div>
+                <p className="mt-2 text-sm font-bold text-qz-text-light">
+                  {savedSessionMeta.current} / {savedSessionMeta.total} 問まで進んでいます。
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onDiscardSession}
+                className="rounded-lg p-2 text-qz-text-light hover:bg-qz-error/10 hover:text-qz-error transition-colors"
+                aria-label="保存済みセッションを破棄"
+              >
+                <XCircle className="h-5 w-5" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={onResumeSession}
+              className="mt-4 qz-btn-primary w-full flex items-center justify-center gap-2"
+            >
+              続きから再開 <ArrowRight className="h-5 w-5" />
+            </button>
+          </div>
+        )}
+
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-qz-blue/10 text-qz-blue text-xs font-black rounded-full mb-6 uppercase tracking-widest">
           Study Mode
         </div>
@@ -34,7 +86,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ totalQuestions, onStar
           {modes.map((mode) => (
             <button
               key={mode.count}
-              onClick={() => onStart(mode.count)}
+              onClick={() => onStart({ count: mode.count, source: 'all' })}
               className={`p-6 rounded-2xl border-2 text-left transition-all duration-300 group active:scale-[0.98] ${
                 mode.primary 
                 ? "bg-qz-blue border-qz-blue text-white shadow-xl shadow-qz-blue/20" 
@@ -51,11 +103,41 @@ export const StartScreen: React.FC<StartScreenProps> = ({ totalQuestions, onStar
                 <ArrowRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${mode.primary ? "text-white" : "text-qz-blue"}`} />
               </div>
               <p className={`text-sm font-bold ${mode.primary ? "text-white/80" : "text-qz-text-light"}`}>
-                {mode.count === -1 ? `全 ${totalQuestions} 問` : `${mode.count} 問`} • {mode.desc}
+                {mode.count >= totalQuestions ? `全 ${totalQuestions} 問` : `${mode.count} 問`} • {mode.desc}
               </p>
             </button>
           ))}
         </div>
+
+        {incorrectQuestionCount > 0 && (
+          <button
+            type="button"
+            onClick={() =>
+              onStart({
+                count: incorrectQuestionCount,
+                source: 'incorrect',
+              })
+            }
+            className="mb-6 w-full rounded-2xl border-2 border-qz-error/20 bg-qz-error/5 p-5 text-left transition-colors hover:border-qz-error/50"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-qz-error">Review Incorrect Only</p>
+                <p className="mt-1 text-sm font-bold text-qz-text-light">
+                  現在の苦手 {incorrectQuestionCount} 問だけを集中復習
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-qz-error" />
+            </div>
+          </button>
+        )}
+
+        {isFreeTier && (
+          <div className="mb-6 flex items-center justify-center gap-2 rounded-xl border border-qz-yellow/30 bg-qz-yellow/10 px-4 py-3 text-xs font-bold text-qz-text-light">
+            <AlertCircle className="h-4 w-4 text-qz-yellow" />
+            Freeプランは1セッションあたり最大{effectiveAllCount}問です。
+          </div>
+        )}
 
         <Link href="/" className="text-qz-text-light font-bold hover:text-qz-blue transition-colors text-sm">
           キャンセルしてホームに戻る

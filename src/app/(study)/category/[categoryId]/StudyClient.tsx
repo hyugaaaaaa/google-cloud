@@ -1,33 +1,53 @@
 "use client";
 
-import React, { useState, useTransition } from 'react';
+import React, { useMemo, useState, useTransition } from 'react';
 import { QuestionCard } from '@/components/study/QuestionCard';
 import { ExplanationArea } from '@/components/study/ExplanationArea';
 import { ProgressBar } from '@/components/study/ProgressBar';
 import { StartScreen } from '@/components/study/StartScreen';
 import { ResultView } from '@/components/study/ResultView';
 import { Header } from '@/components/common/Header';
-import type { Question } from '@/types/app.types';
+import type { PlanTier, Question } from '@/types/app.types';
 import { saveHistoryAction, toggleBookmarkAction } from '@/app/(study)/actions';
 import { useQuiz } from '@/hooks/useQuiz';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
+import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
+import { buildStructuredExplanation } from '@/lib/explanations';
 
 export function StudyClient({ 
   questions, 
   userEmail, 
   streak,
-  initialBookmarkedIds = [] 
+  initialBookmarkedIds = [],
+  incorrectQuestionIds = [],
+  sessionKey,
+  planTier = 'free',
+  maxQuestionCap = Number.POSITIVE_INFINITY,
+  xp = 0,
+  level = 1,
 }: { 
   questions: Question[], 
   userEmail?: string,
   streak?: number,
-  initialBookmarkedIds?: string[]
+  initialBookmarkedIds?: string[],
+  incorrectQuestionIds?: string[],
+  sessionKey?: string,
+  planTier?: PlanTier,
+  maxQuestionCap?: number,
+  xp?: number,
+  level?: number,
 }) {
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(initialBookmarkedIds));
-  const [isPending, startTransition] = useTransition();
-  const [isBookmarkPending, startBookmarkTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const [, startBookmarkTransition] = useTransition();
+  const isFreeTier = planTier !== 'pro';
+
+  const incorrectQuestions = useMemo(
+    () => questions.filter((question) => incorrectQuestionIds.includes(question.id)),
+    [incorrectQuestionIds, questions],
+  );
 
   const {
     isStarted,
@@ -41,9 +61,14 @@ export function StudyClient({
     startQuiz,
     selectOption,
     nextQuestion,
-    resetQuiz
+    resetQuiz,
+    hasSavedSession,
+    savedSessionMeta,
+    resumeQuiz,
+    discardSavedSession,
   } = useQuiz({
     questions,
+    persistenceKey: sessionKey,
     onAnswer: (questionId, isCorrect, option, currentIndex, totalQuestions) => {
       if (!userEmail) {
         if (currentIndex === 0 || currentIndex === totalQuestions - 1) {
@@ -57,7 +82,18 @@ export function StudyClient({
 
       startTransition(async () => {
         try {
-          await saveHistoryAction(questionId, isCorrect, option);
+          const result = await saveHistoryAction(questionId, isCorrect, option);
+          if ('xpAwarded' in result && result.xpAwarded) {
+            toast.success(
+              `${isCorrect ? '正解' : '記録完了'} • +${result.xpAwarded} XP`,
+              {
+                description: result.newLevel
+                  ? `Level ${result.newLevel} に到達しました`
+                  : undefined,
+              },
+            );
+            return;
+          }
           toast.success(isCorrect ? "正解！履歴を保存しました" : "残念！履歴を保存しました");
         } catch (error) {
           console.error("Failed to save history:", error);
@@ -66,6 +102,23 @@ export function StudyClient({
       });
     }
   });
+
+  const swipeHandlers = useSwipeNavigation({
+    enabled: isAnswered,
+    onSwipeLeft: nextQuestion,
+  });
+
+  const handleStart = ({ count, source }: { count: number; source: 'all' | 'incorrect' }) => {
+    const sourceQuestions = source === 'incorrect' ? incorrectQuestions : questions;
+    const effectiveCap = Number.isFinite(maxQuestionCap) ? maxQuestionCap : sourceQuestions.length;
+    const cappedCount = Math.min(count, effectiveCap);
+
+    if (cappedCount < count) {
+      toast.info(`Freeプラン上限により ${cappedCount} 問で開始します。`);
+    }
+
+    startQuiz(cappedCount, sourceQuestions);
+  };
 
   // 1問だけの場合は即座に開始する（RECENT ACTIVITYからの遷移など）
   useEffect(() => {
@@ -118,7 +171,7 @@ export function StudyClient({
   if (!questions || questions.length === 0) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
         <div className="flex-1 flex items-center justify-center p-4 text-center">
           <div className="qz-card p-12 max-w-xl">
             <h1 className="text-2xl font-black text-qz-text dark:text-white mb-4 italic">No Questions Found</h1>
@@ -134,8 +187,18 @@ export function StudyClient({
   if (!isStarted) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} />
-        <StartScreen totalQuestions={questions.length} onStart={startQuiz} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+        <StartScreen
+          totalQuestions={questions.length}
+          onStart={handleStart}
+          incorrectQuestionCount={incorrectQuestions.length}
+          hasSavedSession={hasSavedSession}
+          savedSessionMeta={savedSessionMeta}
+          onResumeSession={resumeQuiz}
+          onDiscardSession={discardSavedSession}
+          maxQuestionCap={maxQuestionCap}
+          isFreeTier={isFreeTier}
+        />
       </div>
     );
   }
@@ -144,7 +207,7 @@ export function StudyClient({
   if (isFinished) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
         <ResultView 
           correctCount={correctCount} 
           totalCount={quizQuestions.length} 
@@ -162,13 +225,17 @@ export function StudyClient({
 
   const correctIndex = currentQuestion.options.indexOf(currentQuestion.answer);
   const correctLabel = correctIndex !== -1 ? String.fromCharCode(65 + correctIndex) : '';
+  const structuredExplanation = buildStructuredExplanation(currentQuestion);
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-      <Header userEmail={userEmail} streak={streak} />
+      <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
       <ProgressBar currentIdx={currentIndex} total={quizQuestions.length} />
       
-      <main className="flex-1 flex flex-col items-center justify-start p-4 py-12 md:py-20 overflow-y-auto">
+      <main
+        className="flex-1 flex flex-col items-center justify-start p-4 py-12 md:py-20 overflow-y-auto touch-pan-y"
+        {...swipeHandlers}
+      >
         {/* Removed AnimatePresence for stability */}
         <div className="w-full max-w-3xl">
           <QuestionCard 
@@ -186,6 +253,9 @@ export function StudyClient({
               <ExplanationArea 
                 isCorrect={isCorrect}
                 explanation={currentQuestion.explanation}
+                whyCorrect={structuredExplanation.whyCorrect}
+                whyOthersWrong={structuredExplanation.whyOthersWrong}
+                relatedConcepts={structuredExplanation.relatedConcepts}
                 onNext={nextQuestion}
                 correctLabel={correctLabel}
               />

@@ -11,25 +11,81 @@ interface UseMockExamProps<T extends Question> {
   questions: T[];
   timeLimitSec: number;
   onFinish?: (answers: AnswerRecord[]) => void;
+  persistenceKey?: string;
 }
 
-export function useMockExam<T extends Question>({ questions, timeLimitSec, onFinish }: UseMockExamProps<T>) {
+type SavedMockExamSession = {
+  currentIndex: number;
+  selectedOption: string | null;
+  answers: AnswerRecord[];
+  timeLeft: number;
+};
+
+function readSavedMockExamSession(key?: string): SavedMockExamSession | null {
+  if (!key || typeof window === 'undefined') return null;
+
+  const raw = window.localStorage.getItem(key);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as SavedMockExamSession;
+    if (!Array.isArray(parsed.answers)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function useMockExam<T extends Question>({
+  questions,
+  timeLimitSec,
+  onFinish,
+  persistenceKey,
+}: UseMockExamProps<T>) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
   const [isFinished, setIsFinished] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeLimitSec);
+  const [savedSessionMeta, setSavedSessionMeta] = useState<{
+    current: number;
+    total: number;
+    remainingSec: number;
+  } | null>(() => {
+    const saved = readSavedMockExamSession(persistenceKey);
+    if (!saved) return null;
+    return {
+      current: Math.min(saved.currentIndex + 1, questions.length),
+      total: questions.length,
+      remainingSec: saved.timeLeft,
+    };
+  });
+  const hasSavedSession = savedSessionMeta !== null;
+  const [isRunning, setIsRunning] = useState(() => !readSavedMockExamSession(persistenceKey));
+  const isInitialized = true;
+
+  const loadSavedSession = useCallback((): SavedMockExamSession | null => {
+    return readSavedMockExamSession(persistenceKey);
+  }, [persistenceKey]);
+
+  const clearSavedSession = useCallback(() => {
+    if (!persistenceKey || typeof window === 'undefined') return;
+    window.localStorage.removeItem(persistenceKey);
+    setSavedSessionMeta(null);
+  }, [persistenceKey]);
 
   const finishExam = useCallback((finalAnswers: AnswerRecord[]) => {
     setIsFinished(true);
+    setIsRunning(false);
+    clearSavedSession();
     if (onFinish) {
       onFinish(finalAnswers);
     }
-  }, [onFinish]);
+  }, [clearSavedSession, onFinish]);
 
   // Timer
   useEffect(() => {
-    if (isFinished) return;
+    if (isFinished || !isRunning) return;
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -43,7 +99,21 @@ export function useMockExam<T extends Question>({ questions, timeLimitSec, onFin
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isFinished, answers, finishExam]);
+  }, [isFinished, answers, finishExam, isRunning]);
+
+  useEffect(() => {
+    if (!persistenceKey || typeof window === 'undefined') return;
+    if (!isRunning || isFinished) return;
+
+    const payload: SavedMockExamSession = {
+      currentIndex,
+      selectedOption,
+      answers,
+      timeLeft,
+    };
+
+    window.localStorage.setItem(persistenceKey, JSON.stringify(payload));
+  }, [answers, currentIndex, isFinished, isRunning, persistenceKey, selectedOption, timeLeft]);
 
   const nextQuestion = useCallback(() => {
     if (!selectedOption || !questions[currentIndex]) return;
@@ -70,6 +140,31 @@ export function useMockExam<T extends Question>({ questions, timeLimitSec, onFin
     }
   }, [currentIndex, questions, selectedOption, answers, finishExam]);
 
+  const resumeExam = useCallback(() => {
+    const saved = loadSavedSession();
+    if (!saved) return false;
+
+    setCurrentIndex(Math.min(saved.currentIndex, Math.max(questions.length - 1, 0)));
+    setSelectedOption(saved.selectedOption);
+    setAnswers(saved.answers);
+    setTimeLeft(Math.min(Math.max(saved.timeLeft, 0), timeLimitSec));
+    setIsFinished(false);
+    setSavedSessionMeta(null);
+    setIsRunning(true);
+    return true;
+  }, [loadSavedSession, questions.length, timeLimitSec]);
+
+  const startFreshExam = useCallback(() => {
+    clearSavedSession();
+    setCurrentIndex(0);
+    setSelectedOption(null);
+    setAnswers([]);
+    setIsFinished(false);
+    setTimeLeft(timeLimitSec);
+    setSavedSessionMeta(null);
+    setIsRunning(true);
+  }, [clearSavedSession, timeLimitSec]);
+
   return {
     currentIndex,
     selectedOption,
@@ -81,6 +176,12 @@ export function useMockExam<T extends Question>({ questions, timeLimitSec, onFin
     totalQuestions: questions.length,
     progress: (currentIndex / questions.length) * 100,
     nextQuestion,
-    finishExam: () => finishExam(answers)
+    finishExam: () => finishExam(answers),
+    hasSavedSession,
+    savedSessionMeta,
+    resumeExam,
+    discardSavedSession: clearSavedSession,
+    startFreshExam,
+    isInitialized,
   };
 }

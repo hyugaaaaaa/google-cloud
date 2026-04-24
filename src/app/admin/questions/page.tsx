@@ -48,9 +48,22 @@ export default async function AdminQuestionsPage({
   // Fetch questions (最新50件に制限してハイドレーションを安定させる)
   let dbQuery = supabase
     .from('questions')
-    .select('*')
+    .select(`
+      id,
+      category_id,
+      content,
+      options,
+      answer,
+      explanation,
+      explanation_why_correct,
+      explanation_why_others_wrong,
+      related_concepts,
+      difficulty,
+      is_active,
+      created_at
+    `)
     .order('created_at', { ascending: false })
-    .limit(50)
+    .limit(80)
 
   if (query) {
     dbQuery = dbQuery.ilike('content', `%${query}%`)
@@ -61,6 +74,20 @@ export default async function AdminQuestionsPage({
   }
 
   const { data: questions, error } = await dbQuery
+
+  const { data: questionStats } = await supabase
+    .from('question_performance_stats')
+    .select('question_id, attempt_count, accuracy_rate')
+
+  const statsMap = new Map(
+    (questionStats || []).map((stat) => [
+      stat.question_id,
+      {
+        attempts: Number(stat.attempt_count || 0),
+        accuracy: Number(stat.accuracy_rate || 0),
+      },
+    ]),
+  )
 
   if (error) {
     return (
@@ -84,7 +111,28 @@ export default async function AdminQuestionsPage({
     options: typeof q.options === 'string' 
       ? JSON.parse(q.options) 
       : (Array.isArray(q.options) ? q.options : []),
+    difficulty: (q.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
+    is_active: q.is_active !== false,
+    explanation_why_correct: q.explanation_why_correct || '',
+    explanation_why_others_wrong: q.explanation_why_others_wrong || '',
+    related_concepts: Array.isArray(q.related_concepts) ? q.related_concepts : [],
+    attempt_count: statsMap.get(q.id)?.attempts || 0,
+    accuracy_rate: statsMap.get(q.id)?.accuracy || 0,
   }))
+
+  const activeCount = processedQuestions.filter((question) => question.is_active).length
+  const totalAttempts = processedQuestions.reduce((sum, question) => sum + question.attempt_count, 0)
+  const weightedAccuracy = totalAttempts > 0
+    ? Math.round(
+        (processedQuestions.reduce(
+          (sum, question) => sum + (question.accuracy_rate * question.attempt_count),
+          0,
+        ) / totalAttempts) * 100,
+      ) / 100
+    : 0
+  const lowQualityCount = processedQuestions.filter(
+    (question) => question.attempt_count >= 5 && question.accuracy_rate < 60,
+  ).length
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg">
@@ -112,16 +160,37 @@ export default async function AdminQuestionsPage({
             データの取得に失敗しました
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {processedQuestions.map((q) => (
-              <QuestionEditor key={q.id} question={q} />
-            ))}
-            {processedQuestions.length === 0 && (
-              <div className="col-span-full qz-card p-20 text-center text-qz-text-light font-bold">
-                該当する問題が見つかりませんでした
+          <>
+            <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="qz-card p-5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-qz-text-light">Questions</p>
+                <p className="mt-2 text-3xl font-black">{processedQuestions.length}</p>
               </div>
-            )}
-          </div>
+              <div className="qz-card p-5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-qz-text-light">Active</p>
+                <p className="mt-2 text-3xl font-black text-qz-success">{activeCount}</p>
+              </div>
+              <div className="qz-card p-5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-qz-text-light">Weighted Accuracy</p>
+                <p className="mt-2 text-3xl font-black text-qz-blue">{weightedAccuracy}%</p>
+              </div>
+              <div className="qz-card p-5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-qz-text-light">Needs Review</p>
+                <p className="mt-2 text-3xl font-black text-qz-error">{lowQualityCount}</p>
+              </div>
+            </section>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {processedQuestions.map((q) => (
+                <QuestionEditor key={q.id} question={q} />
+              ))}
+              {processedQuestions.length === 0 && (
+                <div className="col-span-full qz-card p-20 text-center text-qz-text-light font-bold">
+                  該当する問題が見つかりませんでした
+                </div>
+              )}
+            </div>
+          </>
         )}
       </main>
     </div>

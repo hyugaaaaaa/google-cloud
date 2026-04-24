@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import { DailyChallengeClient } from './DailyChallengeClient'
+import { resolvePlanTier } from '@/lib/feature-gates'
 
 export default async function DailyChallengePage() {
   const supabase = await createClient()
@@ -10,7 +10,23 @@ export default async function DailyChallengePage() {
   const { data: categories } = await supabase.from('categories').select('id, name').order('id')
   
   // Get all questions
-  const { data: allQuestions } = await supabase.from('questions').select('*')
+  const { data: allQuestions } = await supabase
+    .from('questions')
+    .select(`
+      id,
+      category_id,
+      content,
+      options,
+      answer,
+      explanation,
+      explanation_why_correct,
+      explanation_why_others_wrong,
+      related_concepts,
+      difficulty,
+      is_active,
+      created_at
+    `)
+    .eq('is_active', true)
   
   if (!categories || !allQuestions) {
     return <div>データを読み込めませんでした。</div>
@@ -49,6 +65,9 @@ export default async function DailyChallengePage() {
   let isCompleted = false
   let initialBookmarkedIds: string[] = []
   let streak = 0
+  let xp = 0
+  let level = 1
+  let planTier = resolvePlanTier(null)
 
   if (user) {
     // Check if already completed today
@@ -74,11 +93,14 @@ export default async function DailyChallengePage() {
     // プロフィールを取得（streak用）
     const { data: profile } = await supabase
       .from('profiles')
-      .select('streak_count')
+      .select('streak_count, xp, level, plan_tier')
       .eq('id', user.id)
       .single()
     
     streak = profile?.streak_count || 0
+    xp = profile?.xp || 0
+    level = profile?.level || 1
+    planTier = resolvePlanTier(profile?.plan_tier)
   }
 
   return (
@@ -90,6 +112,9 @@ export default async function DailyChallengePage() {
         isCompleted={isCompleted}
         dateString={jstDate}
         initialBookmarkedIds={initialBookmarkedIds}
+        xp={xp}
+        level={level}
+        planTier={planTier}
       />
     </div>
   )

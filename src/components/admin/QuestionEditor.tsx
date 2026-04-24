@@ -11,6 +11,13 @@ type Question = {
   options: string[]
   answer: string
   explanation: string
+  difficulty: 'easy' | 'medium' | 'hard'
+  is_active: boolean
+  explanation_why_correct: string
+  explanation_why_others_wrong: string
+  related_concepts: string[]
+  attempt_count: number
+  accuracy_rate: number
 }
 
 export function QuestionEditor({ question }: { question: Question }) {
@@ -65,6 +72,20 @@ export function QuestionEditor({ question }: { question: Question }) {
           </div>
         </div>
         <h3 className="text-lg font-bold mb-4 line-clamp-2">{question.content}</h3>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="rounded-lg border border-qz-border bg-qz-bg p-2 text-[10px] font-black uppercase tracking-widest text-qz-text-light">
+            Attempts: <span className="text-qz-text">{question.attempt_count}</span>
+          </div>
+          <div className="rounded-lg border border-qz-border bg-qz-bg p-2 text-[10px] font-black uppercase tracking-widest text-qz-text-light">
+            Accuracy: <span className="text-qz-text">{question.accuracy_rate}%</span>
+          </div>
+          <div className="rounded-lg border border-qz-border bg-qz-bg p-2 text-[10px] font-black uppercase tracking-widest text-qz-text-light">
+            Difficulty: <span className="text-qz-text">{question.difficulty}</span>
+          </div>
+          <div className="rounded-lg border border-qz-border bg-qz-bg p-2 text-[10px] font-black uppercase tracking-widest text-qz-text-light">
+            Status: <span className={question.is_active ? 'text-qz-success' : 'text-qz-error'}>{question.is_active ? 'active' : 'disabled'}</span>
+          </div>
+        </div>
         <div className="space-y-1">
           <div className="text-xs font-black text-qz-success uppercase tracking-widest mb-1">正解</div>
           <div className="text-sm font-bold bg-qz-success/5 text-qz-success p-3 rounded-xl border border-qz-success/20">
@@ -142,6 +163,66 @@ export function QuestionEditor({ question }: { question: Question }) {
             value={data.explanation}
             onChange={e => setData({...data, explanation: e.target.value})}
           />
+        </div>
+
+        <div>
+          <label className="block text-xs font-black uppercase tracking-widest text-qz-text-light mb-2">Why Correct</label>
+          <textarea
+            className="qz-input w-full min-h-[80px]"
+            value={data.explanation_why_correct}
+            onChange={e => setData({ ...data, explanation_why_correct: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-black uppercase tracking-widest text-qz-text-light mb-2">Why Others Are Wrong</label>
+          <textarea
+            className="qz-input w-full min-h-[80px]"
+            value={data.explanation_why_others_wrong}
+            onChange={e => setData({ ...data, explanation_why_others_wrong: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-black uppercase tracking-widest text-qz-text-light mb-2">Related Concepts (comma separated)</label>
+          <input
+            className="qz-input w-full"
+            value={data.related_concepts.join(', ')}
+            onChange={e =>
+              setData({
+                ...data,
+                related_concepts: e.target.value
+                  .split(',')
+                  .map((concept) => concept.trim())
+                  .filter(Boolean),
+              })
+            }
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-black uppercase tracking-widest text-qz-text-light mb-2">Difficulty</label>
+            <select
+              className="qz-input w-full"
+              value={data.difficulty}
+              onChange={e => setData({ ...data, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })}
+            >
+              <option value="easy">easy</option>
+              <option value="medium">medium</option>
+              <option value="hard">hard</option>
+            </select>
+          </div>
+          <div className="flex items-end">
+            <label className="flex items-center gap-2 text-sm font-bold text-qz-text-light">
+              <input
+                type="checkbox"
+                checked={data.is_active}
+                onChange={e => setData({ ...data, is_active: e.target.checked })}
+              />
+              Learner向けに公開する
+            </label>
+          </div>
         </div>
       </div>
     </div>

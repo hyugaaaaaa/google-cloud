@@ -9,6 +9,9 @@ type ExplanationAreaProps = {
   onNext: () => void;
   correctLabel?: string;
   isLoading?: boolean;
+  whyCorrect?: string;
+  whyOthersWrong?: string;
+  relatedConcepts?: string[];
 }
 
 export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
@@ -16,11 +19,17 @@ export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
   explanation,
   onNext,
   correctLabel,
-  isLoading = false
+  isLoading = false,
+  whyCorrect,
+  whyOthersWrong,
+  relatedConcepts = []
 }) => {
+  const fallbackExplanation = explanation || 'この問題には解説がありません。';
+  const hasStructuredSections = Boolean(whyCorrect || whyOthersWrong || relatedConcepts.length > 0);
+
   return (
     <div 
-      className={`w-full max-w-2xl mx-auto rounded-[24px] overflow-hidden mt-6 border-2 transition-all duration-500 ease-out opacity-100 translate-y-0 p-8 ${
+      className={`w-full max-w-2xl mx-auto rounded-[24px] overflow-hidden mt-6 border-2 transition-all duration-250 ease-out opacity-100 translate-y-0 p-8 ${
         isCorrect 
           ? 'bg-qz-success/5 border-qz-success/20 shadow-[0_8px_32px_rgba(35,178,109,0.05)]' 
           : 'bg-qz-error/5 border-qz-error/20 shadow-[0_8px_32px_rgba(255,114,94,0.05)]'
@@ -50,12 +59,50 @@ export const ExplanationArea: React.FC<ExplanationAreaProps> = ({
       </div>
         
       <div className="bg-white dark:bg-[#2E3856] rounded-[16px] p-6 mb-8 border border-qz-border dark:border-[#2E3856]">
-        <h4 className="text-xs font-black uppercase tracking-widest text-qz-text-light mb-3">
-          解説
-        </h4>
-        <p className="text-[15px] font-bold text-qz-text dark:text-white leading-relaxed">
-          {explanation || 'この問題には解説がありません。'}
-        </p>
+        {hasStructuredSections ? (
+          <div className="space-y-5">
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-qz-success mb-2">
+                Why Correct
+              </h4>
+              <p className="text-[15px] font-bold text-qz-text dark:text-white leading-relaxed">
+                {whyCorrect || fallbackExplanation}
+              </p>
+            </div>
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-qz-error mb-2">
+                Why Others Are Wrong
+              </h4>
+              <p className="text-[15px] font-bold text-qz-text dark:text-white leading-relaxed">
+                {whyOthersWrong || fallbackExplanation}
+              </p>
+            </div>
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-qz-blue mb-2">
+                Related Concepts
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {(relatedConcepts.length > 0 ? relatedConcepts : ['関連概念なし']).map((concept) => (
+                  <span
+                    key={concept}
+                    className="rounded-full border border-qz-blue/20 bg-qz-blue/5 px-3 py-1 text-xs font-black text-qz-blue"
+                  >
+                    {concept}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h4 className="text-xs font-black uppercase tracking-widest text-qz-text-light mb-3">
+              解説
+            </h4>
+            <p className="text-[15px] font-bold text-qz-text dark:text-white leading-relaxed">
+              {fallbackExplanation}
+            </p>
+          </>
+        )}
       </div>
 
       <button 

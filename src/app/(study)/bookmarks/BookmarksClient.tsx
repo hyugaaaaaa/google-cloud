@@ -1,17 +1,17 @@
 'use client'
 
 import React, { useState, useMemo, useTransition } from 'react'
-import { Calendar, ChevronLeft, BookOpen, CheckCircle2, XCircle, Star, LayoutGrid, List, Bookmark } from 'lucide-react'
+import Link from 'next/link'
+import { ChevronLeft, BookOpen, CheckCircle2, Star, Bookmark } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toggleBookmarkAction } from '@/app/(study)/actions'
 import { toast } from 'sonner'
-import { SafeDate } from '@/components/common/SafeDate'
 
 type BookmarkItem = {
   id: string
   category_id: string
   content: string
-  options: any
+  options: string[]
   answer: string
   explanation: string
   created_at: string
@@ -24,7 +24,7 @@ interface BookmarksClientProps {
 
 export function BookmarksClient({ bookmarks }: BookmarksClientProps) {
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(bookmarks.map(b => b.id)));
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   // カテゴリ一覧と件数を集計（現在ブックマークされているもののみ）
@@ -95,7 +95,7 @@ export function BookmarksClient({ bookmarks }: BookmarksClientProps) {
           ブックマークした問題がありません。<br />
           学習中に気になる問題があれば、星アイコンをタップして保存しましょう。
         </p>
-        <a href="/" className="qz-btn-primary px-8 inline-block">学習を始める</a>
+        <Link href="/" className="qz-btn-primary px-8 inline-block">学習を始める</Link>
       </div>
     )
   }

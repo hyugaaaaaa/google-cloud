@@ -8,6 +8,11 @@ export async function updateQuestionAction(id: string, updates: {
   options: string[];
   answer: string;
   explanation: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  is_active?: boolean;
+  explanation_why_correct?: string;
+  explanation_why_others_wrong?: string;
+  related_concepts?: string[];
 }) {
   const supabase = await createClient()
 
@@ -17,9 +22,23 @@ export async function updateQuestionAction(id: string, updates: {
     return { error: '管理者権限が必要です' }
   }
 
+  const payload = {
+    content: updates.content.trim(),
+    options: updates.options.map((option) => option.trim()),
+    answer: updates.answer.trim(),
+    explanation: updates.explanation.trim(),
+    difficulty: updates.difficulty || 'medium',
+    is_active: updates.is_active ?? true,
+    explanation_why_correct: updates.explanation_why_correct?.trim() || null,
+    explanation_why_others_wrong: updates.explanation_why_others_wrong?.trim() || null,
+    related_concepts: (updates.related_concepts || [])
+      .map((concept) => concept.trim())
+      .filter(Boolean),
+  }
+
   const { error } = await supabase
     .from('questions')
-    .update(updates)
+    .update(payload)
     .eq('id', id)
 
   if (error) {
@@ -62,6 +81,11 @@ export async function createQuestionAction(data: {
   options: string[];
   answer: string;
   explanation: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  is_active?: boolean;
+  explanation_why_correct?: string;
+  explanation_why_others_wrong?: string;
+  related_concepts?: string[];
 }) {
   const supabase = await createClient()
 
@@ -92,9 +116,16 @@ export async function createQuestionAction(data: {
     .insert({
       category_id: data.category_id,
       content: data.content.trim(),
-      options: data.options,
-      answer: data.answer,
+      options: data.options.map((option) => option.trim()),
+      answer: data.answer.trim(),
       explanation: data.explanation.trim(),
+      difficulty: data.difficulty || 'medium',
+      is_active: data.is_active ?? true,
+      explanation_why_correct: data.explanation_why_correct?.trim() || null,
+      explanation_why_others_wrong: data.explanation_why_others_wrong?.trim() || null,
+      related_concepts: (data.related_concepts || [])
+        .map((concept) => concept.trim())
+        .filter(Boolean),
     })
 
   if (error) {
@@ -239,4 +270,3 @@ export async function bulkCreateQuestionsAction(items: {
 
   return results
 }
-

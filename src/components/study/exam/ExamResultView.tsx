@@ -1,9 +1,10 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import { Trophy, LayoutDashboard, AlertCircle, CheckCircle2, XCircle, Star } from 'lucide-react'
 import Link from 'next/link'
 import type { Question } from '@/types/app.types'
+import { buildStructuredExplanation } from '@/lib/explanations'
 
 interface AnswerRecord {
   questionId: string;
@@ -24,9 +25,21 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
   bookmarkedIds,
   onToggleBookmark
 }) => {
+  const [reviewMode, setReviewMode] = useState<'all' | 'incorrect'>('all');
+
   const correctCount = answers.filter(a => a.isCorrect).length
   const totalQuestions = questions.length
   const score = Math.round((correctCount / totalQuestions) * 100)
+
+  const incorrectQuestionIds = useMemo(
+    () => new Set(answers.filter((answer) => !answer.isCorrect).map((answer) => answer.questionId)),
+    [answers],
+  );
+
+  const reviewedQuestions = useMemo(() => {
+    if (reviewMode === 'all') return questions;
+    return questions.filter((question) => incorrectQuestionIds.has(question.id));
+  }, [incorrectQuestionIds, questions, reviewMode]);
 
   return (
     <main className="container mx-auto px-4 py-12 max-w-4xl">
@@ -73,12 +86,38 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
           <AlertCircle className="text-qz-blue w-6 h-6" /> 
           解答の振り返り
         </h2>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setReviewMode('all')}
+            className={`rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-widest transition-colors ${
+              reviewMode === 'all'
+                ? 'border-qz-blue bg-qz-blue text-white'
+                : 'border-qz-border bg-white text-qz-text-light hover:border-qz-blue dark:border-[#2E3856] dark:bg-[#1A1D23]'
+            }`}
+          >
+            全ての問題 ({questions.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setReviewMode('incorrect')}
+            className={`rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-widest transition-colors ${
+              reviewMode === 'incorrect'
+                ? 'border-qz-error bg-qz-error text-white'
+                : 'border-qz-border bg-white text-qz-text-light hover:border-qz-error dark:border-[#2E3856] dark:bg-[#1A1D23]'
+            }`}
+          >
+            間違いのみ ({incorrectQuestionIds.size})
+          </button>
+        </div>
         
         <div className="grid grid-cols-1 gap-6">
-          {questions.map((q, idx) => {
+          {reviewedQuestions.map((q, idx) => {
             const answerRecord = answers.find(a => a.questionId === q.id)
             const isCorrect = answerRecord?.isCorrect || false
             const isBookmarked = bookmarkedIds.has(q.id)
+            const structured = buildStructuredExplanation(q)
             
             return (
               <div key={q.id} className="qz-card group overflow-hidden relative">
@@ -146,9 +185,30 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
                         正解: {String.fromCharCode(65 + q.options.indexOf(q.answer))}
                       </div>
                     </div>
-                    <p className="text-[15px] font-bold text-qz-text dark:text-white leading-relaxed italic">
-                      {q.explanation || '解説がまだ登録されていません。'}
-                    </p>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-qz-success mb-1">Why Correct</p>
+                        <p className="text-[15px] font-bold text-qz-text dark:text-white leading-relaxed">
+                          {structured.whyCorrect}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-qz-error mb-1">Why Others Are Wrong</p>
+                        <p className="text-[15px] font-bold text-qz-text dark:text-white leading-relaxed">
+                          {structured.whyOthersWrong}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {structured.relatedConcepts.map((concept) => (
+                          <span
+                            key={`${q.id}-${concept}`}
+                            className="rounded-full border border-qz-blue/20 bg-white px-3 py-1 text-[10px] font-black text-qz-blue dark:bg-[#1A1D23]"
+                          >
+                            {concept}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -7,8 +7,10 @@ Google Cloud Digital Leader (CDL) 試験に向けた、モバイルフレンド�
 
 | レイヤー | 技術 |
 |---|---|
-| フロントエンド | Next.js 15 (App Router), React 19, Tailwind CSS |
+| フロントエンド | Next.js 16 (App Router), React 19, Tailwind CSS 4 |
 | バックエンド / DB | Supabase (PostgreSQL + GoTrue Auth) |
+| 状態管理 / データ取得 | React Server Components, Server Actions |
+| ライブラリ | Framer Motion (アニメーション), Recharts (統計), Lucide (アイコン), Sonner (トースト) |
 | ホスティング | Vercel |
 | 言語 | TypeScript |
 
@@ -29,6 +31,7 @@ Google Cloud Digital Leader (CDL) 試験に向けた、モバイルフレンド�
 - **デイリーチャレンジ** (`/dashboard/daily`): 毎日リセットされる 6 問（カテゴリごとに 1 問）
 - **ブックマーク機能**: 気になった問題をブックマーク → `/bookmarks` でまとめて復習
 - **苦手問題の復習** (`/dashboard/mistakes`): 直近で間違えた問題をピックアップして再挑戦
+- **個別問題レビュー** (`/review/[questionId]`): 特定の問題の詳細な解説と復習
 
 ### ダッシュボード（要ログイン）
 - **Stats Overview**: 総解答数・正答率・連続学習日数（ストリーク）・本日の解答数
@@ -48,6 +51,7 @@ Google Cloud Digital Leader (CDL) 試験に向けた、モバイルフレンド�
 
 ### その他
 - **PWA 対応**: インストール可能・オフラインバナー表示
+- **SEO 最適化**: `sitemap.ts`, `robots.ts` による動的生成、メタデータの最適化
 - **ダークモード**: システム設定に追従
 - **Admin ページ** (`/admin/questions`): 特定ユーザーのみ問題の追加・編集・削除が可能
 
@@ -76,26 +80,6 @@ npm run dev
 
 ## 🚀 デプロイ (Vercel)
 
-### 初回デプロイ
-
-```bash
-# Vercel CLI でデプロイ（初回はプロジェクト紐付けも実施）
-npx vercel --prod
-```
-
-### 変更をデプロイ（通常の更新フロー）
-
-```bash
-# 1. 変更をコミット
-git add .
-git commit -m "feat: <変更内容>"
-
-# 2. GitHub に push → Vercel が自動で本番デプロイ
-git push origin main
-```
-
-> **Vercel の自動デプロイ設定済みの場合**、`git push origin main` だけで本番環境に自動的にデプロイされます。
-
 ### 環境変数の設定（Vercel ダッシュボード）
 
 Vercel の Project Settings → Environment Variables に以下を追加してください：
@@ -114,29 +98,34 @@ Vercel の Project Settings → Environment Variables に以下を追加して�
 src/
 ├── app/
 │   ├── (auth)/          # ログイン・登録ページ
-│   ├── (study)/
+│   ├── (study)/         # 学習関連
+│   │   ├── bookmarks/   # ブックマーク一覧
 │   │   ├── category/    # カテゴリ別学習
-│   │   ├── mock-exam/   # 模擬試験
 │   │   ├── dashboard/   # ダッシュボード・デイリー・苦手問題
-│   │   └── bookmarks/   # ブックマーク一覧
+│   │   ├── mock-exam/   # 模擬試験
+│   │   └── review/      # 問題レビュー
 │   ├── admin/           # 管理者専用ページ
-│   └── page.tsx         # トップページ
+│   ├── layout.tsx       # 共通レイアウト（Header, Providers）
+│   ├── loading.tsx      # グローバルローディング
+│   ├── page.tsx         # トップページ
+│   ├── robots.ts        # SEO: robots.txt
+│   └── sitemap.ts       # SEO: sitemap.xml
 ├── components/
+│   ├── admin/           # 管理者用コンポーネント
 │   ├── common/          # Header, ThemeToggle, PWA 関連
 │   ├── study/           # QuestionCard, ExplanationArea, ResultView…
 │   └── dashboard/       # StatsOverview, ActivityChart, Achievements…
 ├── hooks/               # useQuiz, useMockExam, useDailyChallenge…
 ├── lib/
 │   ├── supabase/        # Supabase クライアント・middleware
-│   └── crypto.ts        # カテゴリ ID の暗号化ユーティリティ
+│   └── crypto.ts        # ID の暗号化・復号化
 └── types/               # 共通型定義
 ```
 
 ---
 
-*最終更新日: 2026年4月20日*
+*最終更新日: 2026年4月24日*
 
-モートレポジトリに反映
 
 git add .
 git commit -m "fix: limit admin list and normalize text to resolve hydration error"

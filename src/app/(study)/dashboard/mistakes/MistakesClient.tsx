@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { Calendar, ChevronLeft, BookOpen, CheckCircle2, XCircle, AlertCircle, LayoutGrid, List, Star } from 'lucide-react'
+import { Calendar, ChevronLeft, BookOpen, CheckCircle2, XCircle, AlertCircle, Star } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toggleBookmarkAction } from '@/app/(study)/actions'
 import { toast } from 'sonner'
@@ -16,7 +16,7 @@ type MistakeHistoryItem = {
   question_id: string
   questions: {
     content: string
-    options: any
+    options: string[]
     answer: string
     explanation: string
     categories: {
@@ -32,7 +32,7 @@ interface MistakesClientProps {
 
 export function MistakesClient({ mistakes, initialBookmarkedIds = [] }: MistakesClientProps) {
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(initialBookmarkedIds));
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   // カテゴリ一覧と件数を集計

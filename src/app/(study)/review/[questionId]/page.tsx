@@ -4,6 +4,12 @@ import { StudyClient } from '@/app/(study)/category/[categoryId]/StudyClient'
 import type { Question } from '@/types/app.types'
 import { decrypt } from '@/lib/crypto'
 import { getEntitlements, resolvePlanTier } from '@/lib/feature-gates'
+import {
+  normalizeQuestionRecord,
+  queryQuestionSingleWithFallback,
+  QUESTION_SELECT_LEGACY,
+  QUESTION_SELECT_MODERN,
+} from '@/lib/question-schema-compat'
 
 export default async function SpecificReviewPage({
   params
@@ -23,25 +29,22 @@ export default async function SpecificReviewPage({
   if (!user) redirect('/login')
 
   // 特定の問題を1件だけ取得
-  const { data: question, error } = await supabase
-    .from('questions')
-    .select(`
-      id,
-      category_id,
-      content,
-      options,
-      answer,
-      explanation,
-      explanation_why_correct,
-      explanation_why_others_wrong,
-      related_concepts,
-      difficulty,
-      is_active,
-      created_at
-    `)
-    .eq('id', questionId)
-    .eq('is_active', true)
-    .single()
+  const { data: question, error } = await queryQuestionSingleWithFallback((mode) => {
+    if (mode === 'modern') {
+      return supabase
+        .from('questions')
+        .select(QUESTION_SELECT_MODERN)
+        .eq('id', questionId)
+        .eq('is_active', true)
+        .single()
+    }
+
+    return supabase
+      .from('questions')
+      .select(QUESTION_SELECT_LEGACY)
+      .eq('id', questionId)
+      .single()
+  })
 
   if (error || !question) {
     console.error('Error fetching question for specific review:', error)
@@ -49,20 +52,7 @@ export default async function SpecificReviewPage({
   }
 
   // 型変換
-  const processedQuestion: Question = {
-    id: question.id,
-    category_id: question.category_id,
-    content: question.content,
-    options: typeof question.options === 'string' ? JSON.parse(question.options) : question.options,
-    answer: question.answer,
-    explanation: question.explanation || "",
-    explanation_why_correct: question.explanation_why_correct || null,
-    explanation_why_others_wrong: question.explanation_why_others_wrong || null,
-    related_concepts: Array.isArray(question.related_concepts) ? question.related_concepts : [],
-    difficulty: question.difficulty || 'medium',
-    is_active: question.is_active,
-    created_at: question.created_at
-  }
+  const processedQuestion: Question = normalizeQuestionRecord(question)
 
   // ブックマーク情報の取得
   const { data: bookmarkData } = await supabase

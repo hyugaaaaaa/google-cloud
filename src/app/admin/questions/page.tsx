@@ -5,6 +5,12 @@ import { CategoryFilter } from '@/components/admin/CategoryFilter'
 import { QuestionCreator } from '@/components/admin/QuestionCreator'
 import { BulkImporter } from '@/components/admin/BulkImporter'
 import Link from 'next/link'
+import {
+  normalizeQuestionRecord,
+  queryQuestionsArrayWithFallback,
+  QUESTION_SELECT_LEGACY,
+  QUESTION_SELECT_MODERN,
+} from '@/lib/question-schema-compat'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,34 +52,23 @@ export default async function AdminQuestionsPage({
     .order('name')
 
   // Fetch questions (最新50件に制限してハイドレーションを安定させる)
-  let dbQuery = supabase
-    .from('questions')
-    .select(`
-      id,
-      category_id,
-      content,
-      options,
-      answer,
-      explanation,
-      explanation_why_correct,
-      explanation_why_others_wrong,
-      related_concepts,
-      difficulty,
-      is_active,
-      created_at
-    `)
-    .order('created_at', { ascending: false })
-    .limit(80)
+  const { data: questions, error } = await queryQuestionsArrayWithFallback((mode) => {
+    let dbQuery = supabase
+      .from('questions')
+      .select(mode === 'modern' ? QUESTION_SELECT_MODERN : QUESTION_SELECT_LEGACY)
+      .order('created_at', { ascending: false })
+      .limit(80)
 
-  if (query) {
-    dbQuery = dbQuery.ilike('content', `%${query}%`)
-  }
+    if (query) {
+      dbQuery = dbQuery.ilike('content', `%${query}%`)
+    }
 
-  if (categoryId) {
-    dbQuery = dbQuery.eq('category_id', categoryId)
-  }
+    if (categoryId) {
+      dbQuery = dbQuery.eq('category_id', categoryId)
+    }
 
-  const { data: questions, error } = await dbQuery
+    return dbQuery
+  })
 
   const { data: questionStats } = await supabase
     .from('question_performance_stats')
@@ -102,23 +97,22 @@ export default async function AdminQuestionsPage({
   }
 
   // 型の整合性を整える
-  const processedQuestions = (questions || []).map(q => ({
-    ...q,
-    // テキストの不一致（改行コードなど）を防ぐためにトリミング
-    content: q.content?.trim() || "",
-    answer: q.answer?.trim() || "",
-    explanation: q.explanation?.trim() || "",
-    options: typeof q.options === 'string' 
-      ? JSON.parse(q.options) 
-      : (Array.isArray(q.options) ? q.options : []),
-    difficulty: (q.difficulty || 'medium') as 'easy' | 'medium' | 'hard',
-    is_active: q.is_active !== false,
-    explanation_why_correct: q.explanation_why_correct || '',
-    explanation_why_others_wrong: q.explanation_why_others_wrong || '',
-    related_concepts: Array.isArray(q.related_concepts) ? q.related_concepts : [],
-    attempt_count: statsMap.get(q.id)?.attempts || 0,
-    accuracy_rate: statsMap.get(q.id)?.accuracy || 0,
-  }))
+  const processedQuestions = (questions || []).map((question) => {
+    const normalized = normalizeQuestionRecord(question)
+
+    return {
+      ...normalized,
+      // テキストの不一致（改行コードなど）を防ぐためにトリミング
+      content: normalized.content?.trim() || '',
+      answer: normalized.answer?.trim() || '',
+      explanation: normalized.explanation?.trim() || '',
+      explanation_why_correct: normalized.explanation_why_correct || '',
+      explanation_why_others_wrong: normalized.explanation_why_others_wrong || '',
+      related_concepts: Array.isArray(normalized.related_concepts) ? normalized.related_concepts : [],
+      attempt_count: statsMap.get(normalized.id)?.attempts || 0,
+      accuracy_rate: statsMap.get(normalized.id)?.accuracy || 0,
+    }
+  })
 
   const activeCount = processedQuestions.filter((question) => question.is_active).length
   const totalAttempts = processedQuestions.reduce((sum, question) => sum + question.attempt_count, 0)

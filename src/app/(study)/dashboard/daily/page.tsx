@@ -1,6 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { DailyChallengeClient } from './DailyChallengeClient'
 import { resolvePlanTier } from '@/lib/feature-gates'
+import {
+  normalizeQuestionRecord,
+  queryQuestionsArrayWithFallback,
+  QUESTION_SELECT_LEGACY,
+  QUESTION_SELECT_MODERN,
+} from '@/lib/question-schema-compat'
 
 export default async function DailyChallengePage() {
   const supabase = await createClient()
@@ -10,23 +16,18 @@ export default async function DailyChallengePage() {
   const { data: categories } = await supabase.from('categories').select('id, name').order('id')
   
   // Get all questions
-  const { data: allQuestions } = await supabase
-    .from('questions')
-    .select(`
-      id,
-      category_id,
-      content,
-      options,
-      answer,
-      explanation,
-      explanation_why_correct,
-      explanation_why_others_wrong,
-      related_concepts,
-      difficulty,
-      is_active,
-      created_at
-    `)
-    .eq('is_active', true)
+  const { data: allQuestions } = await queryQuestionsArrayWithFallback((mode) => {
+    if (mode === 'modern') {
+      return supabase
+        .from('questions')
+        .select(QUESTION_SELECT_MODERN)
+        .eq('is_active', true)
+    }
+
+    return supabase
+      .from('questions')
+      .select(QUESTION_SELECT_LEGACY)
+  })
   
   if (!categories || !allQuestions) {
     return <div>データを読み込めませんでした。</div>
@@ -56,10 +57,7 @@ export default async function DailyChallengePage() {
     const index = (seedNum + catIdx * 13) % catQuestions.length
     
     const q = catQuestions[index]
-    return {
-      ...q,
-      options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options
-    }
+    return normalizeQuestionRecord(q)
   }).filter(q => q !== null)
 
   let isCompleted = false

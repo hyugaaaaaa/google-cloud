@@ -5,6 +5,12 @@ import { Header } from '@/components/common/Header'
 import { BookmarksClient } from './BookmarksClient'
 import { ChevronLeft, Bookmark } from 'lucide-react'
 import { resolvePlanTier } from '@/lib/feature-gates'
+import {
+  normalizeQuestionRecord,
+  queryQuestionsArrayWithFallback,
+  QUESTION_SELECT_LEGACY,
+  QUESTION_SELECT_MODERN,
+} from '@/lib/question-schema-compat'
 
 export default async function BookmarksPage() {
   const supabase = await createClient()
@@ -72,27 +78,24 @@ export default async function BookmarksPage() {
   }
 
   // ブックマークされた問題の詳細を取得（カテゴリ名を含める）
-  const { data: questions, error: qError } = await supabase
-    .from('questions')
-    .select(`
-      id,
-      category_id,
-      content,
-      options,
-      answer,
-      explanation,
-      explanation_why_correct,
-      explanation_why_others_wrong,
-      related_concepts,
-      difficulty,
-      is_active,
-      created_at,
-      categories (
-        name
-      )
-    `)
-    .in('id', bookmarkIds)
-    .eq('is_active', true)
+  const { data: questions, error: qError } = await queryQuestionsArrayWithFallback((mode) => {
+    const selectColumns = mode === 'modern'
+      ? `${QUESTION_SELECT_MODERN}, categories(name)`
+      : `${QUESTION_SELECT_LEGACY}, categories(name)`
+
+    if (mode === 'modern') {
+      return supabase
+        .from('questions')
+        .select(selectColumns)
+        .in('id', bookmarkIds)
+        .eq('is_active', true)
+    }
+
+    return supabase
+      .from('questions')
+      .select(selectColumns)
+      .in('id', bookmarkIds)
+  })
 
   if (qError) {
     console.error('Error fetching questions for bookmarks:', qError)
@@ -100,37 +103,17 @@ export default async function BookmarksPage() {
   }
 
   // 型変換とデータの整形
-  const processedBookmarks = (questions || []).map((q: {
-    id: string
-    category_id: string
-    content: string
-    options: string[] | string
-    answer: string
-    explanation: string | null
-    explanation_why_correct: string | null
-    explanation_why_others_wrong: string | null
-    related_concepts: string[] | null
-    difficulty: 'easy' | 'medium' | 'hard' | null
-    is_active: boolean
-    created_at: string
-    categories: { name: string }[] | { name: string } | null
-  }) => ({
-    id: q.id,
-    category_id: q.category_id,
-    content: q.content,
-    options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
-    answer: q.answer,
-    explanation: q.explanation || "",
-    explanation_why_correct: q.explanation_why_correct || null,
-    explanation_why_others_wrong: q.explanation_why_others_wrong || null,
-    related_concepts: Array.isArray(q.related_concepts) ? q.related_concepts : [],
-    difficulty: q.difficulty || 'medium',
-    is_active: q.is_active,
-    created_at: q.created_at,
-    categoryName: Array.isArray(q.categories)
-      ? q.categories[0]?.name || '不明'
-      : q.categories?.name || '不明'
-  }))
+  const processedBookmarks = (questions || []).map((question) => {
+    const normalized = normalizeQuestionRecord(question)
+    const categoryName = Array.isArray(question.categories)
+      ? question.categories[0]?.name || '不明'
+      : question.categories?.name || '不明'
+
+    return {
+      ...normalized,
+      categoryName,
+    }
+  })
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg text-qz-text dark:text-qz-text flex flex-col">

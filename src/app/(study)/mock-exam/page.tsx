@@ -4,6 +4,12 @@ import { MockExamClient } from './MockExamClient'
 import { canStartMockExam, resolvePlanTier } from '@/lib/feature-gates'
 import { Header } from '@/components/common/Header'
 import Link from 'next/link'
+import {
+  normalizeQuestionRecord,
+  queryQuestionsArrayWithFallback,
+  QUESTION_SELECT_LEGACY,
+  QUESTION_SELECT_MODERN,
+} from '@/lib/question-schema-compat'
 
 function pseudoRandomScore(value: string, seed: string) {
   let hash = 2166136261
@@ -22,24 +28,17 @@ export default async function MockExamPage() {
 
   // MVPのため全問題を取得し、サーバー側でシャッフルして20問抽出する
   // ※問題数が増えた場合は、PostgreSQL側に random() ソートのRPC関数を作成推奨
-  const { data: questions, error } = await supabase
-    .from('questions')
-    .select(`
-      id,
-      category_id,
-      content,
-      options,
-      answer,
-      explanation,
-      explanation_why_correct,
-      explanation_why_others_wrong,
-      related_concepts,
-      difficulty,
-      is_active,
-      created_at,
-      categories(name)
-    `)
-    .eq('is_active', true)
+  const { data: questions, error } = await queryQuestionsArrayWithFallback((mode) => {
+    const selectColumns = mode === 'modern'
+      ? `${QUESTION_SELECT_MODERN}, categories(name)`
+      : `${QUESTION_SELECT_LEGACY}, categories(name)`
+
+    if (mode === 'modern') {
+      return supabase.from('questions').select(selectColumns).eq('is_active', true)
+    }
+
+    return supabase.from('questions').select(selectColumns)
+  })
 
   if (error || !questions) {
     console.error("Error fetching questions for mock exam:", error)
@@ -52,21 +51,17 @@ export default async function MockExamPage() {
     .slice(0, 20)
 
   // TypeScript型にパース
-  const processedQuestions: (Question & { categoryName: string })[] = selectedQuestions.map(q => ({
-    id: q.id,
-    category_id: q.category_id,
-    categoryName: q.categories?.[0]?.name || '不明',
-    content: q.content,
-    options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
-    answer: q.answer,
-    explanation: q.explanation || "",
-    explanation_why_correct: q.explanation_why_correct || null,
-    explanation_why_others_wrong: q.explanation_why_others_wrong || null,
-    related_concepts: Array.isArray(q.related_concepts) ? q.related_concepts : [],
-    difficulty: q.difficulty || 'medium',
-    is_active: q.is_active,
-    created_at: q.created_at
-  }))
+  const processedQuestions: (Question & { categoryName: string })[] = selectedQuestions.map((question) => {
+    const normalized = normalizeQuestionRecord(question)
+    const categoryName = Array.isArray(question.categories)
+      ? question.categories[0]?.name || '不明'
+      : question.categories?.name || '不明'
+
+    return {
+      ...normalized,
+      categoryName,
+    }
+  })
 
   let initialBookmarkedIds: string[] = []
   let streak = 0

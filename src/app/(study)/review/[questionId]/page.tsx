@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import { StudyClient } from '@/app/(study)/category/[categoryId]/StudyClient'
 import type { Question } from '@/types/app.types'
 import { decrypt } from '@/lib/crypto'
-import { getEntitlements, resolvePlanTier } from '@/lib/feature-gates'
 import {
   normalizeQuestionRecord,
   queryQuestionSingleWithFallback,
@@ -65,15 +64,13 @@ export default async function SpecificReviewPage({
   // プロフィールを取得（streak用）
   const { data: profile } = await supabase
     .from('profiles')
-    .select('streak_count, xp, level, plan_tier')
+    .select('streak_count, xp, level')
     .eq('id', user.id)
     .single()
 
   const streak = profile?.streak_count || 0
   const xp = profile?.xp || 0
   const level = profile?.level || 1
-  const planTier = resolvePlanTier(profile?.plan_tier)
-  const entitlements = getEntitlements({ isGuest: false, planTier })
 
   // StudyClient自体がHeaderを含んでいるため、ここでは直接返す
   return (
@@ -83,8 +80,6 @@ export default async function SpecificReviewPage({
       streak={streak}
       initialBookmarkedIds={initialBookmarkedIds} 
       sessionKey={`cloudmaster:review:single:${processedQuestion.id}:${user.id}`}
-      planTier={planTier}
-      maxQuestionCap={entitlements.categoryQuestionCap}
       xp={xp}
       level={level}
     />

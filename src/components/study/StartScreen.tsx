@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Zap, ArrowRight, RotateCcw, XCircle, AlertCircle } from 'lucide-react'
+import { Zap, ArrowRight, RotateCcw, XCircle } from 'lucide-react'
 import Link from 'next/link'
 
 interface StartScreenProps {
@@ -12,8 +12,6 @@ interface StartScreenProps {
   savedSessionMeta?: { current: number; total: number } | null;
   onResumeSession?: () => void;
   onDiscardSession?: () => void;
-  maxQuestionCap?: number;
-  isFreeTier?: boolean;
 }
 
 export const StartScreen: React.FC<StartScreenProps> = ({
@@ -24,19 +22,13 @@ export const StartScreen: React.FC<StartScreenProps> = ({
   savedSessionMeta = null,
   onResumeSession,
   onDiscardSession,
-  maxQuestionCap = Number.POSITIVE_INFINITY,
-  isFreeTier = false,
 }) => {
-  const effectiveAllCount = Number.isFinite(maxQuestionCap)
-    ? Math.min(totalQuestions, maxQuestionCap)
-    : totalQuestions;
-
   const modes = [
     { count: 10, label: "クイック", desc: "隙間時間に最適", icon: <Zap className="w-5 h-5 text-qz-blue" /> },
     { count: 20, label: "スタンダード", desc: "しっかり確認" },
     { count: 40, label: "チャレンジ", desc: "全問マスター" },
-    { count: effectiveAllCount, label: "すべて", desc: "網羅的に学習", primary: true },
-  ].filter((mode) => mode.count <= effectiveAllCount);
+    { count: totalQuestions, label: "すべて", desc: "網羅的に学習", primary: true },
+  ].filter((mode) => mode.count <= totalQuestions);
 
   return (
     <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
@@ -130,13 +122,6 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               <ArrowRight className="h-5 w-5 text-qz-error" />
             </div>
           </button>
-        )}
-
-        {isFreeTier && (
-          <div className="mb-6 flex items-center justify-center gap-2 rounded-xl border border-qz-yellow/30 bg-qz-yellow/10 px-4 py-3 text-xs font-bold text-qz-text-light">
-            <AlertCircle className="h-4 w-4 text-qz-yellow" />
-            Freeプランは1セッションあたり最大{effectiveAllCount}問です。
-          </div>
         )}
 
         <Link href="/" className="text-qz-text-light font-bold hover:text-qz-blue transition-colors text-sm">

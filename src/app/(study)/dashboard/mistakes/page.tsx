@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { Header } from '@/components/common/Header'
 import { ChevronLeft, CheckCircle2 } from 'lucide-react'
 import { MistakesClient } from './MistakesClient'
-import { resolvePlanTier } from '@/lib/feature-gates'
 
 type MistakeHistoryItem = {
   id: string
@@ -76,18 +75,17 @@ export default async function MistakesPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('streak_count, xp, level, plan_tier')
+    .select('streak_count, xp, level')
     .eq('id', user.id)
     .single()
 
   const streak = profile?.streak_count || 0
   const xp = profile?.xp || 0
   const level = profile?.level || 1
-  const planTier = resolvePlanTier(profile?.plan_tier)
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg text-qz-text dark:text-qz-text flex flex-col">
-      <Header userEmail={user.email || ''} streak={streak} xp={xp} level={level} planTier={planTier} />
+      <Header userEmail={user.email || ''} streak={streak} xp={xp} level={level} />
       
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="mb-4">

@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import { Header } from '@/components/common/Header'
 import { createClient } from '@/lib/supabase/server'
 import { OnboardingForm } from '@/components/onboarding/OnboardingForm'
-import { resolvePlanTier } from '@/lib/feature-gates'
 
 export const metadata: Metadata = {
   title: 'Onboarding',
@@ -29,7 +28,7 @@ export default async function OnboardingPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('streak_count, xp, level, plan_tier, onboarding_completed, onboarding_goal, onboarding_daily_goal, onboarding_exam_date, push_opt_in')
+    .select('streak_count, xp, level, onboarding_completed, onboarding_goal, onboarding_daily_goal, onboarding_exam_date, push_opt_in')
     .eq('id', user.id)
     .single()
 
@@ -44,7 +43,6 @@ export default async function OnboardingPage() {
         streak={profile?.streak_count || 0}
         xp={profile?.xp || 0}
         level={profile?.level || 1}
-        planTier={resolvePlanTier(profile?.plan_tier)}
       />
 
       <main className="container mx-auto max-w-3xl px-4 py-10 md:py-14">

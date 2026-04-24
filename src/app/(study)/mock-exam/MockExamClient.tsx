@@ -9,15 +9,13 @@ import { ExamResultView } from '@/components/study/exam/ExamResultView'
 import { useMockExam } from '@/hooks/useMockExam'
 import { toast } from 'sonner'
 import { useSwipeNavigation } from '@/hooks/useSwipeNavigation'
-import { AlertCircle, RotateCcw } from 'lucide-react'
-import Link from 'next/link'
+import { RotateCcw } from 'lucide-react'
 
 type MockExamClientProps = {
   questions: (Question & { categoryName: string })[],
   userEmail?: string,
   streak?: number,
   initialBookmarkedIds?: string[],
-  planTier?: 'free' | 'pro',
   xp?: number,
   level?: number,
 }
@@ -29,7 +27,6 @@ export function MockExamClient({
   userEmail,
   streak,
   initialBookmarkedIds = [],
-  planTier = 'free',
   xp = 0,
   level = 1,
 }: MockExamClientProps) {
@@ -132,7 +129,7 @@ export function MockExamClient({
   if (!isInitialized) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} />
       </div>
     );
   }
@@ -140,7 +137,7 @@ export function MockExamClient({
   if (hasSavedSession && savedSessionMeta) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} />
         <main className="container mx-auto max-w-2xl px-4 py-12">
           <div className="qz-card p-8">
             <div className="inline-flex items-center gap-2 rounded-full bg-qz-blue/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-qz-blue">
@@ -170,18 +167,6 @@ export function MockExamClient({
                 最初からやり直す
               </button>
             </div>
-
-            {planTier !== 'pro' && (
-              <div className="mt-6 flex items-start gap-2 rounded-xl border border-qz-yellow/30 bg-qz-yellow/10 px-4 py-3 text-xs font-bold text-qz-text-light">
-                <AlertCircle className="h-4 w-4 text-qz-yellow" />
-                <p>
-                  Freeプランは模擬試験の履歴分析が簡易表示です。
-                  <Link href="/#pricing" className="ml-1 text-qz-blue underline">
-                    Proで詳細分析を解放
-                  </Link>
-                </p>
-              </div>
-            )}
           </div>
         </main>
       </div>
@@ -191,7 +176,7 @@ export function MockExamClient({
   if (isFinished) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} />
         <ExamResultView 
           questions={questions}
           answers={answers}
@@ -206,7 +191,7 @@ export function MockExamClient({
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-      <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+      <Header userEmail={userEmail} streak={streak} xp={xp} level={level} />
       
       {/* Sleek Progress Bar for Exam */}
       <div className="fixed top-[64px] left-0 w-full h-1 bg-qz-border dark:bg-[#2E3856] z-[60]">

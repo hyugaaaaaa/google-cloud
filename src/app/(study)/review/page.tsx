@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import { StudyClient } from '@/app/(study)/category/[categoryId]/StudyClient'
 import { Header } from '@/components/common/Header'
 import type { Question } from '@/types/app.types'
-import { getEntitlements, resolvePlanTier } from '@/lib/feature-gates'
 import {
   normalizeQuestionRecord,
   queryQuestionsArrayWithFallback,
@@ -43,20 +42,18 @@ export default async function ReviewPage() {
   // プロフィールを取得（streak用）
   const { data: profile } = await supabase
     .from('profiles')
-    .select('streak_count, xp, level, plan_tier')
+    .select('streak_count, xp, level')
     .eq('id', user.id)
     .single()
 
   const streak = profile?.streak_count || 0
   const xp = profile?.xp || 0
   const level = profile?.level || 1
-  const planTier = resolvePlanTier(profile?.plan_tier)
-  const entitlements = getEntitlements({ isGuest: false, planTier })
 
   if (wrongQuestionIds.length === 0) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={user.email || ''} streak={streak} xp={xp} level={level} planTier={planTier} />
+        <Header userEmail={user.email || ''} streak={streak} xp={xp} level={level} />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="qz-card p-12 text-center max-w-lg">
             <h2 className="text-2xl font-black mb-4">完璧です！</h2>
@@ -109,8 +106,6 @@ export default async function ReviewPage() {
       initialBookmarkedIds={initialBookmarkedIds} 
       incorrectQuestionIds={wrongQuestionIds}
       sessionKey={`cloudmaster:review:all:${user.id}`}
-      planTier={planTier}
-      maxQuestionCap={entitlements.categoryQuestionCap}
       xp={xp}
       level={level}
     />

@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { DailyChallengeClient } from './DailyChallengeClient'
-import { resolvePlanTier } from '@/lib/feature-gates'
 import {
   normalizeQuestionRecord,
   queryQuestionsArrayWithFallback,
@@ -67,7 +66,6 @@ export default async function DailyChallengePage() {
   let streak = 0
   let xp = 0
   let level = 1
-  let planTier = resolvePlanTier(null)
 
   if (user) {
     // Check if already completed today
@@ -93,14 +91,13 @@ export default async function DailyChallengePage() {
     // プロフィールを取得（streak用）
     const { data: profile } = await supabase
       .from('profiles')
-      .select('streak_count, xp, level, plan_tier')
+      .select('streak_count, xp, level')
       .eq('id', user.id)
       .single()
     
     streak = profile?.streak_count || 0
     xp = profile?.xp || 0
     level = profile?.level || 1
-    planTier = resolvePlanTier(profile?.plan_tier)
   }
 
   return (
@@ -114,7 +111,6 @@ export default async function DailyChallengePage() {
         initialBookmarkedIds={initialBookmarkedIds}
         xp={xp}
         level={level}
-        planTier={planTier}
       />
     </div>
   )

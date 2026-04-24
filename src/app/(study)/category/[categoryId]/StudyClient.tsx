@@ -7,7 +7,7 @@ import { ProgressBar } from '@/components/study/ProgressBar';
 import { StartScreen } from '@/components/study/StartScreen';
 import { ResultView } from '@/components/study/ResultView';
 import { Header } from '@/components/common/Header';
-import type { PlanTier, Question } from '@/types/app.types';
+import type { Question } from '@/types/app.types';
 import { saveHistoryAction, toggleBookmarkAction } from '@/app/(study)/actions';
 import { useQuiz } from '@/hooks/useQuiz';
 import Link from 'next/link';
@@ -23,8 +23,6 @@ export function StudyClient({
   initialBookmarkedIds = [],
   incorrectQuestionIds = [],
   sessionKey,
-  planTier = 'free',
-  maxQuestionCap = Number.POSITIVE_INFINITY,
   xp = 0,
   level = 1,
 }: { 
@@ -34,15 +32,12 @@ export function StudyClient({
   initialBookmarkedIds?: string[],
   incorrectQuestionIds?: string[],
   sessionKey?: string,
-  planTier?: PlanTier,
-  maxQuestionCap?: number,
   xp?: number,
   level?: number,
 }) {
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(initialBookmarkedIds));
   const [, startTransition] = useTransition();
   const [, startBookmarkTransition] = useTransition();
-  const isFreeTier = planTier !== 'pro';
 
   const incorrectQuestions = useMemo(
     () => questions.filter((question) => incorrectQuestionIds.includes(question.id)),
@@ -110,14 +105,7 @@ export function StudyClient({
 
   const handleStart = ({ count, source }: { count: number; source: 'all' | 'incorrect' }) => {
     const sourceQuestions = source === 'incorrect' ? incorrectQuestions : questions;
-    const effectiveCap = Number.isFinite(maxQuestionCap) ? maxQuestionCap : sourceQuestions.length;
-    const cappedCount = Math.min(count, effectiveCap);
-
-    if (cappedCount < count) {
-      toast.info(`Freeプラン上限により ${cappedCount} 問で開始します。`);
-    }
-
-    startQuiz(cappedCount, sourceQuestions);
+    startQuiz(count, sourceQuestions);
   };
 
   // 1問だけの場合は即座に開始する（RECENT ACTIVITYからの遷移など）
@@ -171,7 +159,7 @@ export function StudyClient({
   if (!questions || questions.length === 0) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} />
         <div className="flex-1 flex items-center justify-center p-4 text-center">
           <div className="qz-card p-12 max-w-xl">
             <h1 className="text-2xl font-black text-qz-text dark:text-white mb-4 italic">No Questions Found</h1>
@@ -187,7 +175,7 @@ export function StudyClient({
   if (!isStarted) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} />
         <StartScreen
           totalQuestions={questions.length}
           onStart={handleStart}
@@ -196,8 +184,6 @@ export function StudyClient({
           savedSessionMeta={savedSessionMeta}
           onResumeSession={resumeQuiz}
           onDiscardSession={discardSavedSession}
-          maxQuestionCap={maxQuestionCap}
-          isFreeTier={isFreeTier}
         />
       </div>
     );
@@ -207,7 +193,7 @@ export function StudyClient({
   if (isFinished) {
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} />
         <ResultView 
           correctCount={correctCount} 
           totalCount={quizQuestions.length} 
@@ -229,7 +215,7 @@ export function StudyClient({
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-      <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+      <Header userEmail={userEmail} streak={streak} xp={xp} level={level} />
       <ProgressBar currentIdx={currentIndex} total={quizQuestions.length} />
       
       <main

@@ -10,7 +10,6 @@ type HeaderProps = {
   streak?: number
   xp?: number
   level?: number
-  planTier?: 'free' | 'pro'
   showAdminLink?: boolean
 }
 
@@ -19,7 +18,6 @@ export function Header({
   streak,
   xp = 0,
   level = 1,
-  planTier = 'free',
   showAdminLink = false,
 }: HeaderProps) {
   const publicAdminAllowlist = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
@@ -90,16 +88,6 @@ export function Header({
                 <span className="text-[10px] font-bold opacity-80">{xp} XP</span>
               </Link>
 
-              <span
-                className={`hidden sm:inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${
-                  planTier === 'pro'
-                    ? 'border-qz-success/30 bg-qz-success/10 text-qz-success'
-                    : 'border-qz-border bg-qz-bg text-qz-text-light dark:border-[#2E3856] dark:bg-[#2E3856]'
-                }`}
-              >
-                {planTier}
-              </span>
-              
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-qz-bg dark:bg-[#2E3856] rounded-full border border-qz-border dark:border-[#2E3856]">
                 <User className="w-4 h-4 text-qz-blue" />
                 <span className="text-xs font-bold truncate max-w-[100px]">{userEmail.split('@')[0]}</span>

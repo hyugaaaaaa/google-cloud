@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Brain, Lock, ArrowRight } from 'lucide-react'
+import { Brain, ArrowRight } from 'lucide-react'
 
 type WeaknessInsight = {
   id: string
@@ -15,7 +15,6 @@ type WeaknessInsight = {
 
 type WeaknessInsightsProps = {
   insights: WeaknessInsight[]
-  isLocked?: boolean
 }
 
 const priorityStyles: Record<WeaknessInsight['priority'], string> = {
@@ -24,7 +23,7 @@ const priorityStyles: Record<WeaknessInsight['priority'], string> = {
   low: 'border-qz-success/30 bg-qz-success/10 text-qz-success',
 }
 
-export function WeaknessInsights({ insights, isLocked = false }: WeaknessInsightsProps) {
+export function WeaknessInsights({ insights }: WeaknessInsightsProps) {
   return (
     <section className="qz-card p-6 md:p-8 space-y-5">
       <div className="flex items-center justify-between gap-3">
@@ -35,18 +34,12 @@ export function WeaknessInsights({ insights, isLocked = false }: WeaknessInsight
           </div>
           <h3 className="mt-2 text-xl font-black">次に解くべき優先カテゴリ</h3>
         </div>
-        {isLocked && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-qz-yellow/30 bg-qz-yellow/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-qz-text-light">
-            <Lock className="h-3.5 w-3.5 text-qz-yellow" />
-            Pro
-          </span>
-        )}
       </div>
 
       {insights.length === 0 ? (
         <p className="text-sm font-bold text-qz-text-light">十分な履歴がまだないため、分析結果は次回の学習後に表示されます。</p>
       ) : (
-        <div className={`space-y-3 ${isLocked ? 'opacity-55' : ''}`}>
+        <div className="space-y-3">
           {insights.slice(0, 3).map((insight) => (
             <div key={insight.id} className="rounded-2xl border border-qz-border bg-white p-4 dark:border-[#2E3856] dark:bg-[#1A1D23]">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -57,22 +50,11 @@ export function WeaknessInsights({ insights, isLocked = false }: WeaknessInsight
               </div>
               <p className="mt-1 text-xs font-bold text-qz-text-light">正答率 {insight.accuracy}% • 苦手 {insight.wrongCount} 問</p>
               <p className="mt-3 text-sm font-bold text-qz-text dark:text-white">{insight.recommendation}</p>
-              {!isLocked && (
-                <Link href={insight.studyPath} className="mt-3 inline-flex items-center gap-1 text-xs font-black uppercase tracking-widest text-qz-blue">
-                  このカテゴリを学習 <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              )}
+              <Link href={insight.studyPath} className="mt-3 inline-flex items-center gap-1 text-xs font-black uppercase tracking-widest text-qz-blue">
+                このカテゴリを学習 <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           ))}
-        </div>
-      )}
-
-      {isLocked && insights.length > 0 && (
-        <div className="rounded-xl border border-qz-yellow/30 bg-qz-yellow/10 px-4 py-3">
-          <p className="text-xs font-bold text-qz-text-light">
-            Proでは、カテゴリ優先度・おすすめ順・改善予測を毎回更新します。
-            <Link href="/#pricing" className="ml-1 text-qz-blue underline">詳細を見る</Link>
-          </p>
         </div>
       )}
     </section>

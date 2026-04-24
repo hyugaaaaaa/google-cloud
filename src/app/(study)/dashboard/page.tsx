@@ -9,10 +9,9 @@ import { StatsOverview } from '@/components/dashboard/StatsOverview'
 import { RecentSessions } from '@/components/dashboard/RecentSessions'
 import { WeaknessInsights } from '@/components/dashboard/WeaknessInsights'
 import { PushNotificationToggle } from '@/components/common/PushNotificationToggle'
-import { BarChart3, Lock, Sparkles } from 'lucide-react'
+import { BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 import { encrypt } from '@/lib/crypto'
-import { getEntitlements, resolvePlanTier } from '@/lib/feature-gates'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,15 +53,9 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('streak_count, nickname, plan_tier, xp, level, onboarding_completed, push_opt_in')
+    .select('streak_count, nickname, xp, level, onboarding_completed, push_opt_in')
     .eq('id', user.id)
     .single()
-
-  const planTier = resolvePlanTier(profile?.plan_tier)
-  const entitlements = getEntitlements({
-    isGuest: false,
-    planTier,
-  })
 
   const { count: bookmarkCount } = await supabase
     .from('bookmarks')
@@ -240,7 +233,6 @@ export default async function DashboardPage() {
           streak={streak}
           xp={xp}
           level={level}
-          planTier={planTier}
         />
         <main className="container mx-auto px-4 py-12 max-w-4xl">
           <div className="qz-card p-16 text-center">
@@ -273,7 +265,6 @@ export default async function DashboardPage() {
         streak={streak}
         xp={xp}
         level={level}
-        planTier={planTier}
       />
 
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-6xl">
@@ -332,68 +323,40 @@ export default async function DashboardPage() {
             </Link>
           </section>
 
-          <WeaknessInsights insights={weaknessInsights} isLocked={!entitlements.weakInsights} />
+          <WeaknessInsights insights={weaknessInsights} />
 
-          {entitlements.detailedAnalytics ? (
-            <>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                  <ActivityChart data={weeklyData} />
-                </div>
-                <div className="lg:col-span-1">
-                  <Achievements
-                    streak={streak}
-                    totalAnswers={totalAnswers}
-                    hasPerfectScore={categoryResults.some((result) => result.accuracy === 100 && result.total >= 5)}
-                    hasCompletedMock={hasCompletedMock}
-                  />
-                </div>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <ActivityChart data={weeklyData} />
+            </div>
+            <div className="lg:col-span-1">
+              <Achievements
+                streak={streak}
+                totalAnswers={totalAnswers}
+                hasPerfectScore={categoryResults.some((result) => result.accuracy === 100 && result.total >= 5)}
+                hasCompletedMock={hasCompletedMock}
+              />
+            </div>
+          </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                <div className="lg:col-span-1">
-                  <RecentSessions sessions={recentSessions} />
-                </div>
-                <div className="lg:col-span-2 space-y-6">
-                  <CategoryRadarChart categories={categoryResults} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-1">
+              <RecentSessions sessions={recentSessions} />
+            </div>
+            <div className="lg:col-span-2 space-y-6">
+              <CategoryRadarChart categories={categoryResults} />
 
-                  <div className="pt-4 border-t border-qz-border dark:border-[#2E3856]">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-sm font-black italic tracking-tight uppercase text-qz-text-light">Select to Study</h2>
-                      <div className="px-2 py-0.5 bg-qz-bg dark:bg-[#2E3856] rounded-full border border-qz-border dark:border-[#2E3856]">
-                        <span className="text-[9px] font-black text-qz-text-light uppercase">Sorted by total</span>
-                      </div>
-                    </div>
-                    <CategoryList categories={categoryResults} />
+              <div className="pt-4 border-t border-qz-border dark:border-[#2E3856]">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-black italic tracking-tight uppercase text-qz-text-light">Select to Study</h2>
+                  <div className="px-2 py-0.5 bg-qz-bg dark:bg-[#2E3856] rounded-full border border-qz-border dark:border-[#2E3856]">
+                    <span className="text-[9px] font-black text-qz-text-light uppercase">Sorted by total</span>
                   </div>
                 </div>
-              </div>
-            </>
-          ) : (
-            <section className="qz-card p-6 md:p-8">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-qz-yellow">
-                    <Lock className="h-4 w-4" />
-                    Pro Analytics
-                  </div>
-                  <h3 className="mt-1 text-xl font-black">詳細分析は Pro で解放されます</h3>
-                  <p className="mt-1 text-sm font-bold text-qz-text-light">
-                    週間推移チャート、カテゴリレーダー、最近の解答トレースが利用できます。
-                  </p>
-                </div>
-                <Link href="/#pricing" className="qz-btn-primary !py-3 !px-5 inline-flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Proを確認
-                </Link>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-qz-border dark:border-[#2E3856]">
-                <h2 className="text-sm font-black italic tracking-tight uppercase text-qz-text-light mb-4">Category Snapshot</h2>
                 <CategoryList categories={categoryResults} />
               </div>
-            </section>
-          )}
+            </div>
+          </div>
         </div>
       </main>
     </div>

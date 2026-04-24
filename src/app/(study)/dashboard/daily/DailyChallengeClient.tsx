@@ -21,7 +21,6 @@ export function DailyChallengeClient({
   initialBookmarkedIds = [],
   xp = 0,
   level = 1,
-  planTier = 'free',
 }: { 
   questions: Question[], 
   userEmail?: string, 
@@ -31,7 +30,6 @@ export function DailyChallengeClient({
   initialBookmarkedIds?: string[],
   xp?: number,
   level?: number,
-  planTier?: 'free' | 'pro',
 }) {
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(initialBookmarkedIds));
   const [, startBookmarkTransition] = useTransition();
@@ -129,7 +127,7 @@ export function DailyChallengeClient({
 
     return (
       <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+        <Header userEmail={userEmail} streak={streak} xp={xp} level={level} />
         <main className="flex-grow flex items-center justify-center p-4">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -169,7 +167,7 @@ export function DailyChallengeClient({
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
-      <Header userEmail={userEmail} streak={streak} xp={xp} level={level} planTier={planTier} />
+      <Header userEmail={userEmail} streak={streak} xp={xp} level={level} />
       
       <main className="container mx-auto px-4 py-8 max-w-3xl flex-grow flex flex-col">
         {/* Progress Header */}

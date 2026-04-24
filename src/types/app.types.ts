@@ -4,7 +4,6 @@ export type Category = {
   created_at: string;
 };
 
-export type PlanTier = "free" | "pro";
 export type QuestionDifficulty = "easy" | "medium" | "hard";
 
 export type Question = {
@@ -26,7 +25,6 @@ export type Profile = {
   id: string; // UUID
   user_id: string; // Supabase Auth UID
   nickname: string | null;
-  plan_tier?: PlanTier;
   xp?: number;
   level?: number;
   onboarding_completed?: boolean;

@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import { StudyClient } from './StudyClient'
 import type { Question } from '@/types/app.types'
 import { decrypt } from '@/lib/crypto'
-import { getEntitlements, resolvePlanTier } from '@/lib/feature-gates'
 import {
   normalizeQuestionRecord,
   queryQuestionsArrayWithFallback,
@@ -54,7 +53,6 @@ export default async function CategoryStudyPage({
   let streak = 0
   let xp = 0
   let level = 1
-  let planTier = resolvePlanTier(null)
   let incorrectQuestionIds: string[] = []
 
   if (user) {
@@ -67,14 +65,13 @@ export default async function CategoryStudyPage({
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('streak_count, xp, level, plan_tier')
+      .select('streak_count, xp, level')
       .eq('id', user.id)
       .single()
     
     streak = profile?.streak_count || 0
     xp = profile?.xp || 0
     level = profile?.level || 1
-    planTier = resolvePlanTier(profile?.plan_tier)
 
     const questionIds = processedQuestions.map((question) => question.id)
     if (questionIds.length > 0) {
@@ -98,11 +95,6 @@ export default async function CategoryStudyPage({
     }
   }
 
-  const entitlements = getEntitlements({
-    isGuest: !user,
-    planTier,
-  })
-
   return <StudyClient 
     questions={processedQuestions} 
     userEmail={user?.email || ''} 
@@ -110,8 +102,6 @@ export default async function CategoryStudyPage({
     initialBookmarkedIds={initialBookmarkedIds} 
     incorrectQuestionIds={incorrectQuestionIds}
     sessionKey={`cloudmaster:study:${categoryId}:${user?.id || 'guest'}`}
-    planTier={planTier}
-    maxQuestionCap={entitlements.categoryQuestionCap}
     xp={xp}
     level={level}
   />

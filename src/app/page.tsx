@@ -122,7 +122,7 @@ export default async function Home() {
               <p className="text-sm font-bold text-qz-text-light">
                 Freeプラン: カテゴリ学習は1セッション20問まで、模擬試験は1日1回です。
               </p>
-              <Link href="/#pricing" className="rounded-xl bg-qz-text px-4 py-2 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-qz-blue">
+              <Link href="/#pricing" className="rounded-xl bg-qz-blue px-4 py-2 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-qz-blue-hover">
                 Proを確認
               </Link>
             </div>

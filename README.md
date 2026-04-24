@@ -128,9 +128,17 @@ src/
 
 ---
 
-*最終更新日: 2026年4月24日*
+## 🚀 デプロイ・更新フロー
 
+変更を GitHub に push すると、Vercel によって自動的に本番環境へデプロイされます。
 
+```bash
+# 変更をコミットして本番環境に反映
 git add .
 git commit -m "fix: limit admin list and normalize text to resolve hydration error"
 git push origin main
+```
+
+---
+
+*最終更新日: 2026年4月24日*

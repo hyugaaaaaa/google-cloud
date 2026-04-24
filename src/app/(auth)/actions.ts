@@ -2,10 +2,56 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 
 type AuthActionState = {
   error: string
+}
+
+function sanitizeNextPath(nextPath: string): string {
+  if (!nextPath.startsWith('/') || nextPath.startsWith('//')) {
+    return '/'
+  }
+  return nextPath
+}
+
+async function getRequestOrigin() {
+  const headersList = await headers()
+  const origin = headersList.get('origin')
+  if (origin) return origin
+
+  const forwardedHost = headersList.get('x-forwarded-host')
+  const host = headersList.get('host')
+  const protocol =
+    headersList.get('x-forwarded-proto') || (process.env.NODE_ENV === 'production' ? 'https' : 'http')
+
+  if (forwardedHost) return `${protocol}://${forwardedHost}`
+  if (host) return `${protocol}://${host}`
+
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+  return 'http://localhost:3000'
+}
+
+async function signInWithGoogle(nextPath: string) {
+  const supabase = await createClient()
+  const origin = await getRequestOrigin()
+  const safeNextPath = sanitizeNextPath(nextPath)
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNextPath)}`,
+    },
+  })
+
+  if (error || !data?.url) {
+    const errorMessage = encodeURIComponent(error?.message || 'google_auth_failed')
+    redirect(`/login?error=${errorMessage}`)
+  }
+
+  redirect(data.url)
 }
 
 export async function loginAction(_: AuthActionState, formData: FormData) {
@@ -72,6 +118,14 @@ export async function signupAction(_: AuthActionState, formData: FormData) {
 
   revalidatePath('/', 'layout')
   redirect('/onboarding')
+}
+
+export async function loginWithGoogleAction() {
+  await signInWithGoogle('/onboarding')
+}
+
+export async function signupWithGoogleAction() {
+  await signInWithGoogle('/onboarding')
 }
 
 export async function logoutAction() {

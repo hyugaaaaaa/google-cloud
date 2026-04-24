@@ -41,7 +41,9 @@ export async function updateSession(request: NextRequest) {
                        request.nextUrl.pathname.startsWith('/icon-') ||
                        request.nextUrl.pathname.startsWith('/favicon.ico')
 
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')
+  const isAuthPage =
+    request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')
+  const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback')
 
   // ゲストユーザーでもアクセスできるパブリックなパス
   const isPublicStudyPage = 
@@ -51,7 +53,7 @@ export async function updateSession(request: NextRequest) {
 
 
   // If user is not logged in and trying to access protected pages, redirect to login
-  if (!user && !isAuthPage && !isPublicFile && !isPublicStudyPage && request.nextUrl.pathname !== '/') {
+  if (!user && !isAuthPage && !isAuthCallback && !isPublicFile && !isPublicStudyPage && request.nextUrl.pathname !== '/') {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'

@@ -20,7 +20,7 @@ Google Cloud Digital Leader (CDL) 試験に向けた、モバイルフレンド�
 
 ### 認証 & アクセス制御
 - **ゲストモード**: アカウント不要でカテゴリ学習・模擬試験・デイリーチャレンジに挑戦可能
-- **Supabase Auth**: メール/パスワードによる登録 & ログイン (`/login`, `/register`)
+- **Supabase Auth**: メール/パスワード + Google OAuth による登録 & ログイン (`/login`, `/register`)
 - **Middleware (`src/lib/supabase/middleware.ts`) によるルート保護**
   - ✅ ゲスト可: `/category/*`, `/mock-exam`, `/dashboard/daily`
   - 🔒 要ログイン: `/dashboard`, `/dashboard/mistakes`, `/bookmarks`
@@ -93,6 +93,11 @@ Vercel の Project Settings → Environment Variables に以下を追加して�
 | `URL_ENCRYPTION_KEY` | URL 暗号化用シークレット（32文字以上） |
 | `ADMIN_EMAILS` | 管理者メールの許可リスト（任意。カンマ区切り） |
 | `NEXT_PUBLIC_ADMIN_EMAILS` | 管理リンク表示用の許可リスト（任意。カンマ区切り） |
+
+Google OAuth を有効化する場合は、以下を設定してください。
+- Supabase Dashboard `Authentication > Providers > Google` で Google Provider を有効化し、Google Client ID / Secret を登録
+- Supabase Dashboard `Authentication > URL Configuration` の Redirect URLs に `https://<your-domain>/auth/callback`（ローカル開発は `http://localhost:3000/auth/callback`）を追加
+- Google Cloud Console 側の OAuth クライアント「承認済みのリダイレクト URI」に Supabase の Callback URL（`https://<project-ref>.supabase.co/auth/v1/callback`）を登録
 
 ---
 

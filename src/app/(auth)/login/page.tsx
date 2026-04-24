@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useActionState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { loginAction } from '@/app/(auth)/actions'
+import { loginAction, loginWithGoogleAction } from '@/app/(auth)/actions'
 import { Header } from '@/components/common/Header'
 import { LogIn, Key, Mail, ArrowRight } from 'lucide-react'
 
@@ -11,7 +12,15 @@ const initialState = {
 }
 
 export default function LoginPage() {
+  const searchParams = useSearchParams()
   const [state, formAction, isPending] = useActionState(loginAction, initialState)
+  const oauthError = searchParams.get('error')
+  const oauthErrorMessage = oauthError
+    ? oauthError === 'google_auth_failed'
+      ? 'Googleログインに失敗しました。時間をおいて再試行してください。'
+      : oauthError
+    : ''
+  const errorMessage = state?.error || oauthErrorMessage
 
   return (
     <div className="min-h-screen bg-qz-bg dark:bg-qz-bg flex flex-col">
@@ -34,10 +43,10 @@ export default function LoginPage() {
           </div>
 
           <form action={formAction} className="mt-10 space-y-6">
-            {state?.error && (
+            {errorMessage && (
               <div className="bg-qz-error/10 border border-qz-error/20 text-qz-error p-4 rounded-xl text-sm font-bold flex items-center gap-3">
                 <span className="w-2 h-2 rounded-full bg-qz-error animate-pulse"></span>
-                {state.error}
+                {errorMessage}
               </div>
             )}
 
@@ -93,6 +102,18 @@ export default function LoginPage() {
             >
               <span className="text-xl">{isPending ? 'ログイン中...' : 'ログイン'}</span>
               {!isPending && <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />}
+            </button>
+          </form>
+
+          <form action={loginWithGoogleAction}>
+            <button
+              type="submit"
+              className="mt-4 w-full flex items-center justify-center gap-3 rounded-xl border-2 border-qz-border dark:border-[#2E3856] bg-white dark:bg-[#1A1D23] px-4 py-3.5 font-black text-qz-text dark:text-white transition-all hover:bg-qz-bg dark:hover:bg-[#2E3856]"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.4l2.6-2.5C16.8 3.5 14.6 2.5 12 2.5 6.8 2.5 2.5 6.8 2.5 12s4.3 9.5 9.5 9.5c5.5 0 9.1-3.9 9.1-9.3 0-.6-.1-1.1-.1-1.5H12z" />
+              </svg>
+              Googleでログイン
             </button>
           </form>
 

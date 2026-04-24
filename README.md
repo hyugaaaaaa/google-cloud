@@ -131,6 +131,3 @@ src/
 *最終更新日: 2026年4月24日*
 
 
-git add .
-git commit -m "fix: limit admin list and normalize text to resolve hydration error"
-git push origin main

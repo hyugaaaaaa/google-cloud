@@ -9,13 +9,6 @@ type AuthActionState = {
   error: string
 }
 
-function sanitizeNextPath(nextPath: string): string {
-  if (!nextPath.startsWith('/') || nextPath.startsWith('//')) {
-    return '/'
-  }
-  return nextPath
-}
-
 async function getRequestOrigin() {
   const headersList = await headers()
   const origin = headersList.get('origin')
@@ -34,15 +27,14 @@ async function getRequestOrigin() {
   return 'http://localhost:3000'
 }
 
-async function signInWithGoogle(nextPath: string) {
+async function signInWithGoogle() {
   const supabase = await createClient()
   const origin = await getRequestOrigin()
-  const safeNextPath = sanitizeNextPath(nextPath)
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNextPath)}`,
+      redirectTo: `${origin}/auth/callback`,
     },
   })
 
@@ -121,11 +113,11 @@ export async function signupAction(_: AuthActionState, formData: FormData) {
 }
 
 export async function loginWithGoogleAction() {
-  await signInWithGoogle('/onboarding')
+  await signInWithGoogle()
 }
 
 export async function signupWithGoogleAction() {
-  await signInWithGoogle('/onboarding')
+  await signInWithGoogle()
 }
 
 export async function logoutAction() {

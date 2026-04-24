@@ -2,8 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse, type NextRequest } from 'next/server'
 
 function sanitizeNextPath(nextPath: string | null) {
-  if (!nextPath) return '/'
-  if (!nextPath.startsWith('/') || nextPath.startsWith('//')) return '/'
+  if (!nextPath) return '/onboarding'
+  if (!nextPath.startsWith('/') || nextPath.startsWith('//')) return '/onboarding'
   return nextPath
 }
 

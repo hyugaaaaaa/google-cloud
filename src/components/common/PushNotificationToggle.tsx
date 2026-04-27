@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Bell, BellOff } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -27,12 +27,38 @@ export function PushNotificationToggle({ initialOptIn = false }: PushNotificatio
     if (typeof window === 'undefined') return false
     return 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window
   }, [])
+  const hasFetchedVapidKeyRef = useRef(false)
 
   const resolveVapidPublicKey = useCallback(async () => {
     if (vapidPublicKey) return vapidPublicKey
 
     try {
       const response = await fetch('/api/push/public-key', {
+        method: 'GET',
+        cache: 'no-store',
+      })
+      const result = (await response.json().catch(() => null)) as
+        | { publicKey?: string; error?: string }
+        | null
+
+      if (!response.ok || !result?.publicKey) {
+        return null
+      }
+
+      setVapidPublicKey(result.publicKey)
+      return result.publicKey
+    } catch (error) {
+      console.error('Failed to load VAPID public key:', error)
+      return null
+    }
+  }, [vapidPublicKey])
+
+  const resolveVapidPublicKeyFromOrigin = useCallback(async () => {
+    if (vapidPublicKey) return vapidPublicKey
+
+    try {
+      const endpoint = new URL('/api/push/public-key', window.location.origin).toString()
+      const response = await fetch(endpoint, {
         method: 'GET',
         cache: 'no-store',
       })
@@ -71,9 +97,15 @@ export function PushNotificationToggle({ initialOptIn = false }: PushNotificatio
   }, [supported])
 
   useEffect(() => {
-    if (!supported || vapidPublicKey) return
-    void resolveVapidPublicKey()
-  }, [supported, vapidPublicKey, resolveVapidPublicKey])
+    if (!supported || vapidPublicKey || hasFetchedVapidKeyRef.current) return
+    hasFetchedVapidKeyRef.current = true
+    void resolveVapidPublicKeyFromOrigin().then((resolvedKey) => {
+      if (!resolvedKey) {
+        // allow manual retry from button click
+        hasFetchedVapidKeyRef.current = false
+      }
+    })
+  }, [supported, vapidPublicKey, resolveVapidPublicKeyFromOrigin])
 
   const enableNotifications = async () => {
     if (!supported) {
@@ -81,7 +113,7 @@ export function PushNotificationToggle({ initialOptIn = false }: PushNotificatio
       return
     }
 
-    const key = await resolveVapidPublicKey()
+    const key = (await resolveVapidPublicKeyFromOrigin()) || (await resolveVapidPublicKey())
 
     if (!key) {
       toast.error('通知設定が未完了です（VAPIDキー未設定）。')

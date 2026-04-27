@@ -44,6 +44,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage =
     request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')
   const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback')
+  const isPublicApi = request.nextUrl.pathname.startsWith('/api/push/public-key')
 
   // ゲストユーザーでもアクセスできるパブリックなパス
   const isPublicStudyPage = 
@@ -53,7 +54,7 @@ export async function updateSession(request: NextRequest) {
 
 
   // If user is not logged in and trying to access protected pages, redirect to login
-  if (!user && !isAuthPage && !isAuthCallback && !isPublicFile && !isPublicStudyPage && request.nextUrl.pathname !== '/') {
+  if (!user && !isAuthPage && !isAuthCallback && !isPublicApi && !isPublicFile && !isPublicStudyPage && request.nextUrl.pathname !== '/') {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'

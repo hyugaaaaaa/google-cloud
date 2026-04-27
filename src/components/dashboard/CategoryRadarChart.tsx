@@ -7,7 +7,6 @@ import {
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
-  ResponsiveContainer,
   Tooltip
 } from 'recharts'
 import { Target } from 'lucide-react'
@@ -87,37 +86,42 @@ export function CategoryRadarChart({ categories }: CategoryRadarChartProps) {
       {/* Chart */}
       <div ref={chartWrapperRef} className="w-full h-[280px] md:h-[360px] relative z-10">
         {!isClient ? null : chartData.length > 2 && chartSize.width > 0 && chartSize.height > 0 ? (
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-            <RadarChart cx="50%" cy="50%" outerRadius="72%" data={chartData}>
-              <PolarGrid
-                gridType="circle"
-                stroke="var(--qz-border)"
-                strokeWidth={1}
-              />
-              <PolarAngleAxis
-                dataKey="subject"
-                tick={{ fill: 'var(--qz-text-light)', fontSize: 11, fontWeight: 700 }}
-                tickSize={12}
-              />
-              <PolarRadiusAxis
-                angle={90}
-                domain={[0, 100]}
-                tick={false}
-                axisLine={false}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Radar
-                name="正答率"
-                dataKey="accuracy"
-                stroke="var(--qz-blue)"
-                strokeWidth={2.5}
-                fill="var(--qz-blue)"
-                fillOpacity={0.18}
-                dot={{ r: 3, fill: 'var(--qz-blue)', strokeWidth: 0 }}
-                activeDot={false}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
+          <RadarChart
+            width={chartSize.width}
+            height={chartSize.height}
+            cx="50%"
+            cy="50%"
+            outerRadius="72%"
+            data={chartData}
+          >
+            <PolarGrid
+              gridType="circle"
+              stroke="var(--qz-border)"
+              strokeWidth={1}
+            />
+            <PolarAngleAxis
+              dataKey="subject"
+              tick={{ fill: 'var(--qz-text-light)', fontSize: 11, fontWeight: 700 }}
+              tickSize={12}
+            />
+            <PolarRadiusAxis
+              angle={90}
+              domain={[0, 100]}
+              tick={false}
+              axisLine={false}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Radar
+              name="正答率"
+              dataKey="accuracy"
+              stroke="var(--qz-blue)"
+              strokeWidth={2.5}
+              fill="var(--qz-blue)"
+              fillOpacity={0.18}
+              dot={{ r: 3, fill: 'var(--qz-blue)', strokeWidth: 0 }}
+              activeDot={false}
+            />
+          </RadarChart>
         ) : chartData.length > 2 ? (
           <div className="w-full h-full flex items-center justify-center text-qz-text-light font-bold text-sm text-center px-4">
             チャートを読み込み中...

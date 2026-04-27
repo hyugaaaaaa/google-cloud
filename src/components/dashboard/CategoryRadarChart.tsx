@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Radar,
   RadarChart,
@@ -42,6 +42,28 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payl
 
 export function CategoryRadarChart({ categories }: CategoryRadarChartProps) {
   const isClient = typeof window !== 'undefined'
+  const chartWrapperRef = useRef<HTMLDivElement | null>(null)
+  const [chartSize, setChartSize] = useState({ width: 0, height: 0 })
+
+  useEffect(() => {
+    if (!chartWrapperRef.current) return
+
+    const element = chartWrapperRef.current
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (!entry) return
+
+      const nextWidth = Math.max(0, Math.floor(entry.contentRect.width))
+      const nextHeight = Math.max(0, Math.floor(entry.contentRect.height))
+      setChartSize({ width: nextWidth, height: nextHeight })
+    })
+
+    observer.observe(element)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
 
   const chartData = categories.map((cat) => ({
     subject: cat.name,
@@ -63,8 +85,8 @@ export function CategoryRadarChart({ categories }: CategoryRadarChartProps) {
       </div>
 
       {/* Chart */}
-      <div className="w-full h-[280px] md:h-[360px] relative z-10">
-        {!isClient ? null : chartData.length > 2 ? (
+      <div ref={chartWrapperRef} className="w-full h-[280px] md:h-[360px] relative z-10">
+        {!isClient ? null : chartData.length > 2 && chartSize.width > 0 && chartSize.height > 0 ? (
           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <RadarChart cx="50%" cy="50%" outerRadius="72%" data={chartData}>
               <PolarGrid
@@ -96,6 +118,10 @@ export function CategoryRadarChart({ categories }: CategoryRadarChartProps) {
               />
             </RadarChart>
           </ResponsiveContainer>
+        ) : chartData.length > 2 ? (
+          <div className="w-full h-full flex items-center justify-center text-qz-text-light font-bold text-sm text-center px-4">
+            チャートを読み込み中...
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-qz-text-light font-bold text-sm text-center px-4">
             レーダーチャートの表示には<br />3つ以上のカテゴリが必要です

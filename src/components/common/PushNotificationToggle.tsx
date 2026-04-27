@@ -131,8 +131,28 @@ export function PushNotificationToggle({ initialOptIn = false }: PushNotificatio
       return
     }
 
+    if (!supported) {
+      toast.error('このブラウザはプッシュ通知に対応していません。')
+      return
+    }
+
     setIsTesting(true)
     try {
+      const registration = await navigator.serviceWorker.getRegistration()
+      const subscription = await registration?.pushManager.getSubscription()
+
+      if (!subscription) {
+        toast.error('購読情報が見つかりません。通知を再度有効化してください。')
+        return
+      }
+
+      // サーバー側購読が消えていた場合に備えてテスト前に同期する
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription }),
+      })
+
       const response = await fetch('/api/push/test', {
         method: 'POST',
       })
@@ -140,7 +160,8 @@ export function PushNotificationToggle({ initialOptIn = false }: PushNotificatio
       const result = (await response.json().catch(() => null)) as { error?: string } | null
 
       if (!response.ok) {
-        throw new Error(result?.error || 'Test push failed')
+        toast.error(result?.error || 'テスト通知の送信に失敗しました。')
+        return
       }
 
       toast.success('テスト通知を送信しました。通知センターを確認してください。')

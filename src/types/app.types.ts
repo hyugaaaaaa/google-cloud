@@ -32,6 +32,7 @@ export type Profile = {
   onboarding_daily_goal?: number | null;
   onboarding_exam_date?: string | null;
   push_opt_in?: boolean;
+  last_push_reminder_at?: string | null;
   created_at: string;
 };
 

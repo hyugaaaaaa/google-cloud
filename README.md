@@ -68,6 +68,10 @@ npm install
 # NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 # URL_ENCRYPTION_KEY=<32文字以上のランダム文字列>
+# NEXT_PUBLIC_VAPID_PUBLIC_KEY=<VAPID公開鍵>
+# VAPID_PRIVATE_KEY=<VAPID秘密鍵>
+# SUPABASE_SERVICE_ROLE_KEY=<Supabase Service Role Key>
+# CRON_SECRET=<Vercel Cron 認証用シークレット>
 # ADMIN_EMAILS=<admin1@example.com,admin2@example.com>   # 任意
 # NEXT_PUBLIC_ADMIN_EMAILS=<admin1@example.com,admin2@example.com> # 任意（管理リンク表示用）
 
@@ -91,6 +95,11 @@ Vercel の Project Settings → Environment Variables に以下を追加して�
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase プロジェクト URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase の匿名キー |
 | `URL_ENCRYPTION_KEY` | URL 暗号化用シークレット（32文字以上） |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Web Push 用 VAPID 公開鍵 |
+| `VAPID_PRIVATE_KEY` | Web Push 用 VAPID 秘密鍵 |
+| `SUPABASE_SERVICE_ROLE_KEY` | 通知バッチ配信で使う Supabase Service Role Key |
+| `VAPID_SUBJECT` | 任意。`mailto:you@example.com` 形式（未設定時は既定値） |
+| `CRON_SECRET` | Vercel Cron から `/api/push/send-daily` を叩く認証トークン |
 | `ADMIN_EMAILS` | 管理者メールの許可リスト（任意。カンマ区切り） |
 | `NEXT_PUBLIC_ADMIN_EMAILS` | 管理リンク表示用の許可リスト（任意。カンマ区切り） |
 
@@ -98,6 +107,12 @@ Google OAuth を有効化する場合は、以下を設定してください。
 - Supabase Dashboard `Authentication > Providers > Google` で Google Provider を有効化し、Google Client ID / Secret を登録
 - Supabase Dashboard `Authentication > URL Configuration` の Redirect URLs に `https://<your-domain>/auth/callback`（ローカル開発は `http://localhost:3000/auth/callback`）を追加
 - Google Cloud Console 側の OAuth クライアント「承認済みのリダイレクト URI」に Supabase の Callback URL（`https://<project-ref>.supabase.co/auth/v1/callback`）を登録
+
+PWA プッシュ通知を有効化する場合は、以下を追加で設定してください。
+- VAPID キーを生成（例: `npx web-push generate-vapid-keys`）
+- 生成した公開鍵を `NEXT_PUBLIC_VAPID_PUBLIC_KEY`、秘密鍵を `VAPID_PRIVATE_KEY` に設定
+- Vercel では `vercel.json` の Cron（`/api/push/send-daily`）を有効化し、`CRON_SECRET` を設定
+- DB マイグレーションを反映（`supabase db push`）
 
 ---
 

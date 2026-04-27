@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Bell, BellOff } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -18,6 +18,7 @@ type PushNotificationToggleProps = {
 export function PushNotificationToggle({ initialOptIn = false }: PushNotificationToggleProps) {
   const [enabled, setEnabled] = useState(initialOptIn)
   const [isPending, setIsPending] = useState(false)
+  const [isTesting, setIsTesting] = useState(false)
 
   const supported = useMemo(() => {
     if (typeof window === 'undefined') return false
@@ -25,6 +26,24 @@ export function PushNotificationToggle({ initialOptIn = false }: PushNotificatio
   }, [])
 
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+
+  useEffect(() => {
+    if (!supported) return
+
+    const syncSubscriptionState = async () => {
+      try {
+        const registration = await navigator.serviceWorker.getRegistration()
+        const subscription = await registration?.pushManager.getSubscription()
+        if (subscription) {
+          setEnabled(true)
+        }
+      } catch (error) {
+        console.error('Failed to sync push subscription state:', error)
+      }
+    }
+
+    void syncSubscriptionState()
+  }, [supported])
 
   const enableNotifications = async () => {
     if (!supported) {
@@ -39,6 +58,11 @@ export function PushNotificationToggle({ initialOptIn = false }: PushNotificatio
 
     setIsPending(true)
     try {
+      if (Notification.permission === 'denied') {
+        toast.error('ブラウザ設定で通知がブロックされています。設定を変更してください。')
+        return
+      }
+
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') {
         toast.error('通知許可が必要です。')
@@ -46,10 +70,13 @@ export function PushNotificationToggle({ initialOptIn = false }: PushNotificatio
       }
 
       const registration = await navigator.serviceWorker.register('/sw.js')
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: base64UrlToUint8Array(vapidPublicKey),
-      })
+      const existingSubscription = await registration.pushManager.getSubscription()
+      const subscription =
+        existingSubscription ||
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: base64UrlToUint8Array(vapidPublicKey),
+        }))
 
       const response = await fetch('/api/push/subscribe', {
         method: 'POST',
@@ -98,6 +125,33 @@ export function PushNotificationToggle({ initialOptIn = false }: PushNotificatio
     }
   }
 
+  const sendTestNotification = async () => {
+    if (!enabled) {
+      toast.error('先に通知を有効化してください。')
+      return
+    }
+
+    setIsTesting(true)
+    try {
+      const response = await fetch('/api/push/test', {
+        method: 'POST',
+      })
+
+      const result = (await response.json().catch(() => null)) as { error?: string } | null
+
+      if (!response.ok) {
+        throw new Error(result?.error || 'Test push failed')
+      }
+
+      toast.success('テスト通知を送信しました。通知センターを確認してください。')
+    } catch (error) {
+      console.error(error)
+      toast.error('テスト通知の送信に失敗しました。')
+    } finally {
+      setIsTesting(false)
+    }
+  }
+
   return (
     <div className="qz-card p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -106,17 +160,27 @@ export function PushNotificationToggle({ initialOptIn = false }: PushNotificatio
       </div>
 
       {enabled ? (
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={disableNotifications}
-          className="rounded-xl border-2 border-qz-border px-4 py-2 text-sm font-black text-qz-text transition-colors hover:bg-qz-bg dark:border-[#2E3856] dark:text-white dark:hover:bg-[#2E3856]"
-        >
-          <span className="inline-flex items-center gap-2">
-            <BellOff className="h-4 w-4" />
-            {isPending ? '更新中...' : '通知をオフ'}
-          </span>
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={isTesting || isPending}
+            onClick={sendTestNotification}
+            className="rounded-xl border-2 border-qz-blue/20 bg-qz-blue/10 px-4 py-2 text-sm font-black text-qz-blue transition-colors hover:bg-qz-blue/15 disabled:opacity-60"
+          >
+            {isTesting ? '送信中...' : 'テスト通知'}
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={disableNotifications}
+            className="rounded-xl border-2 border-qz-border px-4 py-2 text-sm font-black text-qz-text transition-colors hover:bg-qz-bg dark:border-[#2E3856] dark:text-white dark:hover:bg-[#2E3856]"
+          >
+            <span className="inline-flex items-center gap-2">
+              <BellOff className="h-4 w-4" />
+              {isPending ? '更新中...' : '通知をオフ'}
+            </span>
+          </button>
+        </div>
       ) : (
         <button
           type="button"
